@@ -14,7 +14,7 @@ from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
-
+# крутой комментарий на проверку (удалить)
 class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
