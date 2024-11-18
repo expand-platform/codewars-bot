@@ -52,13 +52,14 @@ class BotHandlers():
         self.markup.add(self.keyboard_buttons["help"])
 
 
-    # TODO: подправить функцию, не работает :(
+    # TODO: подправить функцию, не работает :('
+    #! Из-за этой херни вылетаем 400 ошибка
     def command_use_log(self, command, tg_user, chat_id):
         if chat_id == self.admin_ids[0] or chat_id == self.admin_ids[1] or chat_id == self.admin_ids[2]:
             print("Админ использовал команду")
         else:
             for value in self.admin_ids:
-                print(self.admin_ids[0])
+                print(self.admin_ids[0]) # вот тут 400 ошибка летит
                 self.bot.send_message(value, f"Пользователь {tg_user} перешёл в раздел {command}")
         
     def start_command(self):
