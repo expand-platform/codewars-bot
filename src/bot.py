@@ -34,7 +34,10 @@ class Bot:
         self.setup_command_menu()
         self.handlers.start_handlers()
          
-        self.bot.infinity_polling(restart_on_change=True)
+        #! Это должно быть только на development, нужно сделать переменную в env
+        #! и написать if
+        # self.bot.infinity_polling(restart_on_change=True)
+        self.bot.infinity_polling()
 
 
 """
