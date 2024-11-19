@@ -79,6 +79,9 @@ class BotHandlers():
              
             self.command_use_log("/start", username, message.chat.id)
             
+            #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
+            #? "бот запущен и ждёт команд, нажми /start"
+            
             
     def check_stats_command(self): 
         @self.bot.message_handler(commands=["check_stats"])
