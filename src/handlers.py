@@ -14,7 +14,8 @@ from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
-# крутой комментарий на проверку (удалить)
+
+
 class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
@@ -62,15 +63,22 @@ class BotHandlers():
                 print(self.admin_ids[0]) # вот тут 400 ошибка летит
                 self.bot.send_message(value, f"Пользователь {tg_user} перешёл в раздел {command}")
         
+        
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
         @self.bot.message_handler(commands=["start"], func=lambda message: True)
         def echo_all(message):
+            #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
+            #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
+            
             username = message.from_user.username
             text = self.messages["start_bot"].format(username)
+            
             print("user chat id:", message.chat.id)
-            self.bot.send_message(message.chat.id, text)  
+            self.bot.send_message(message.chat.id, text) 
+             
             self.command_use_log("/start", username, message.chat.id)
+            
             
     def check_stats_command(self): 
         @self.bot.message_handler(commands=["check_stats"])
@@ -84,6 +92,7 @@ class BotHandlers():
             self.command_use_log("/check_stats", username, message.chat.id)
             self.bot.register_next_step_handler(message=bot_message, callback=self.check_stats_response)
 
+
     def check_stats_response(self, message):
         tg_username = message.from_user.username
         try:
@@ -91,6 +100,7 @@ class BotHandlers():
             self.bot.reply_to(message, user_stats)
         except:
             self.bot.reply_to(message, self.messages["check_stats_error"])
+        
         
     def get_username_command(self):
         """Дает возможность взять свой юзернейм"""
@@ -101,6 +111,7 @@ class BotHandlers():
             self.bot.reply_to(message, text) 
             self.command_use_log("/getusername", username, message.chat.id)
 
+
     def random_task_command(self):
         @self.bot.message_handler(commands=['random_task'])
         def random_task_level_pick(message: Message):   
@@ -108,6 +119,7 @@ class BotHandlers():
             self.bot.send_message(message.chat.id, self.messages["random_task_level_pick"], reply_markup=markup)
             username = message.from_user.username
             self.command_use_log("/random_task", username, message.chat.id)
+
 
         """случайная задача из коллекции"""
         @self.bot.callback_query_handler(func=lambda call: True)
@@ -142,6 +154,7 @@ class BotHandlers():
             else:
                 self.bot.send_message(chat_id, self.messages["random_task_not_found"])
 
+
     def find_task_command(self):
         """Поиск задачи из кодварса по названию"""
         @self.bot.message_handler(commands=['find_task'])
@@ -154,6 +167,7 @@ class BotHandlers():
             username = message.from_user.username
             self.command_use_log("/find_task", username, message.chat.id)
             self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
+
 
     def find_task_response(self, message):
         result = transform_challenge_string(message)
@@ -184,6 +198,7 @@ class BotHandlers():
             username = message.from_user.username
             self.command_use_log("/load_tasks", username, message.chat.id)
             self.bot.register_next_step_handler(message=bot_message, callback=self.load_challenges_final_step)
+                
                 
     def load_challenges_final_step(self, message: Message):
         username = message.text
@@ -239,6 +254,7 @@ class BotHandlers():
                 text=self.messages["load_tasks_error"], 
                 parse_mode=self.parse_mode
             )
+
 
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
