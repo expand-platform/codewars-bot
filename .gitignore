@@ -1,3 +1,7 @@
+# files
 .env
 tgitboot.pem
+docs/strategy.md
+
+# folders
 __pycache__
