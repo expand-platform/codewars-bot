@@ -36,8 +36,8 @@ class Bot:
          
         #! Это должно быть только на development, нужно сделать переменную в env
         #! и написать if
-        # self.bot.infinity_polling(restart_on_change=True)
-        self.bot.infinity_polling()
+        self.bot.infinity_polling(restart_on_change=True)
+        # self.bot.infinity_polling()
 
 
 """

@@ -31,27 +31,29 @@ class BotHandlers():
         self.codewars_api = Codewars_Challenges()
 
         self.keyboard_buttons = keyboard_buttons
+        
+        self.markup = None
     
     
     def start_handlers(self):
         self.start_command()
-        self.check_stats_command() 
-        self.get_username_command()
-        self.random_task_command()
-        self.find_task_command()
-        self.load_challenges_command()
+        # self.check_stats_command() 
+        # self.get_username_command()
+        # self.random_task_command()
+        # self.find_task_command()
+        # self.load_challenges_command()
         self.handle_random_text() 
-        self.create_keyboard()
         
     def create_keyboard(self):
-        # ! ДОБАВИЛ КНОПКИ ВРОДЕ НО ИХ ЕЩЕ НЕТУ
         # * КОГДА ДОБАВЛЯЕТЕ НОВУЮ КОММАНДУ В KEYBOARDBUTTON СТАРАЙТЕСЬ РАВНОМЕРНО ДЕЛАТЬ (ОДНА СТРОЧКА С MARKUP.ADD ЭТО ОДНА ГОРИЗОНТАЛЬНАЯ ГРУПА)
-        self.markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
         
-        self.markup.add(self.keyboard_buttons["get_username"], self.keyboard_buttons["check_stats"], self.keyboard_buttons["random_task"])
-        self.markup.add(self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"], self.keyboard_buttons["random_lvltask"])
-        self.markup.add(self.keyboard_buttons["help"])
-
+        markup.add(self.keyboard_buttons["get_username"], self.keyboard_buttons["check_stats"], self.keyboard_buttons["random_task"])
+        markup.add(self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"], self.keyboard_buttons["random_lvltask"])
+        markup.add(self.keyboard_buttons["help"])
+        
+        return markup
+    
     def command_use_log(self, command, tg_user, chat_id):
         for value in self.admin_ids: 
             if str(chat_id) == str(value):
@@ -63,6 +65,8 @@ class BotHandlers():
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
         @self.bot.message_handler(commands=["start"], func=lambda message: True)
         def echo_all(message):
+            markup = self.create_keyboard()
+
             #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
             #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
             
@@ -70,17 +74,14 @@ class BotHandlers():
             text = self.messages["start_bot"].format(username)
             
             print("user chat id:", message.chat.id)
-            self.bot.send_message(message.chat.id, text) 
+            self.bot.send_message(message.chat.id, text, reply_markup=markup) 
              
             self.command_use_log("/start", username, message.chat.id)
-            
             #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
             #? "бот запущен и ждёт команд, нажми /start"
             
             
-    def check_stats_command(self): 
-        @self.bot.message_handler(commands=["check_stats"])
-        def check_stats(message):
+    def check_stats_command(self, message): 
             bot_message = self.bot.send_message(
                 chat_id=message.chat.id, 
                 text=self.messages["ask_codewars_username"], 
@@ -100,23 +101,18 @@ class BotHandlers():
             self.bot.reply_to(message, self.messages["check_stats_error"])
         
         
-    def get_username_command(self):
-        """Дает возможность взять свой юзернейм"""
-        @self.bot.message_handler(commands=["getusername"])
-        def get_user_name(message):
+    def get_username_command(self, message):
             username = message.from_user.username
             text = self.messages["tg_username"].format(username) 
             self.bot.reply_to(message, text) 
             self.command_use_log("/getusername", username, message.chat.id)
 
 
-    def random_task_command(self):
-        @self.bot.message_handler(commands=['random_task'])
-        def random_task_level_pick(message: Message):   
-            markup = quick_markup(values=lvl_buttons, row_width=2)
-            self.bot.send_message(message.chat.id, self.messages["random_task_level_pick"], reply_markup=markup)
-            username = message.from_user.username
-            self.command_use_log("/random_task", username, message.chat.id)
+    def random_task_command(self, message):
+        markup = quick_markup(values=lvl_buttons, row_width=2)
+        self.bot.send_message(message.chat.id, self.messages["random_task_level_pick"], reply_markup=markup)
+        username = message.from_user.username
+        self.command_use_log("/random_task", username, message.chat.id)
 
 
         """случайная задача из коллекции"""
@@ -153,19 +149,17 @@ class BotHandlers():
                 self.bot.send_message(chat_id, self.messages["random_task_not_found"])
 
 
-    def find_task_command(self):
+    def find_task_command(self, message):
         """Поиск задачи из кодварса по названию"""
-        @self.bot.message_handler(commands=['find_task'])
-        def echo(message):
-            bot_message = self.bot.send_message(
-                chat_id=message.chat.id, 
-                text=self.messages["find_task_ask_name"], 
-                parse_mode=self.parse_mode
-            )
-            username = message.from_user.username
-            self.command_use_log("/find_task", username, message.chat.id)
-            self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
-
+        bot_message = self.bot.send_message(
+            chat_id=message.chat.id, 
+            text=self.messages["find_task_ask_name"], 
+            parse_mode=self.parse_mode
+        )
+        username = message.from_user.username
+        self.command_use_log("/find_task", username, message.chat.id)
+        self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
+ 
 
     def find_task_response(self, message):
         result = transform_challenge_string(message)
@@ -184,18 +178,16 @@ class BotHandlers():
             self.bot.reply_to(message, text)
 
            
-    def load_challenges_command(self):
-        """ load tasks from another user, saves them to db """
-        @self.bot.message_handler(commands=['load_tasks'])
-        def load_tasks(message: Message):            
-            bot_message = self.bot.send_message(
-                chat_id=message.chat.id, 
-                text=self.messages["load_challenges_intro"], 
-                parse_mode=self.parse_mode
-            )
-            username = message.from_user.username
-            self.command_use_log("/load_tasks", username, message.chat.id)
-            self.bot.register_next_step_handler(message=bot_message, callback=self.load_challenges_final_step)
+    def load_challenges_command(self, message):
+        """ load tasks from another user, saves them to db """          
+        bot_message = self.bot.send_message(
+            chat_id=message.chat.id, 
+            text=self.messages["load_challenges_intro"], 
+            parse_mode=self.parse_mode
+        )
+        username = message.from_user.username
+        self.command_use_log("/load_tasks", username, message.chat.id)
+        self.bot.register_next_step_handler(message=bot_message, callback=self.load_challenges_final_step)
                 
                 
     def load_challenges_final_step(self, message: Message):
@@ -258,5 +250,27 @@ class BotHandlers():
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message):
-            self.bot.send_message(message.chat.id, self.messages["random_text_reply"])     
+            if message.text == "Get your username":
+                self.get_username_command(message)
+            
+            elif message.text == "Check stats":
+                self.check_stats_command(message)
+                
+            elif message.text == "Random task":
+                self.random_task_command(message)
+            
+            elif message.text == "Find task":
+                self.find_task_command(message)
+            
+            elif message.text == "Load task":
+                self.load_challenges_command(message)
+                
+            elif message.text == "Random task and lvl":
+                self.bot.send_message(message.chat.id, "Not in service yet)))")
+        
+            elif message.text == "Help":
+                self.bot.send_message(message.chat.id, "No help, ur alone in this world)))")
+             
+            else:
+                self.bot.send_message(message.chat.id, self.messages["random_text_reply"])     
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
