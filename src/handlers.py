@@ -15,6 +15,7 @@ from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
 
+# с кнопками есть баги, клава иногда не появляется, по фикшу на уроке
 
 class BotHandlers():
     def __init__(self, bot):
@@ -250,25 +251,25 @@ class BotHandlers():
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message):
-            if message.text == "Get your username":
+            if message.text == "Get your username 🎭":
                 self.get_username_command(message)
             
-            elif message.text == "Check stats":
+            elif message.text == "Check stats 🏅":
                 self.check_stats_command(message)
                 
-            elif message.text == "Random task":
+            elif message.text == "Random task 🥋":
                 self.random_task_command(message)
             
-            elif message.text == "Find task":
+            elif message.text == "Find task 🔍":
                 self.find_task_command(message)
             
-            elif message.text == "Load task":
+            elif message.text == "Load task 🔃":
                 self.load_challenges_command(message)
                 
-            elif message.text == "Random task and lvl":
+            elif message.text == "Random task and lvl 🎲":
                 self.bot.send_message(message.chat.id, "Not in service yet)))")
         
-            elif message.text == "Help":
+            elif message.text == "Help ❔":
                 self.bot.send_message(message.chat.id, "No help, ur alone in this world)))")
              
             else:
