@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 keyboard_buttons = {
-    "start": types.KeyboardButton("Start "),
+    "get_username": types.KeyboardButton("Get your username 🎭"),
     "check_stats": types.KeyboardButton("Check stats 🏅"),
     "random_task": types.KeyboardButton("Random task 🥋"),
     "find_task": types.KeyboardButton("Find task 🔍"),

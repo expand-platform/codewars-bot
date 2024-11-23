@@ -16,5 +16,5 @@ lvl_buttons = {
     "2 Kyu": {"callback_data": "2_kyu"},
     "7 Dan": {"callback_data": "7_dan"},
     "1 Kyu": {"callback_data": "1_kyu"},
-    "8 Dan": {"callback_data": "8_dan"}
+    "8 Dan": {"callback_data": "8_dan"}  
 }
