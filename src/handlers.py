@@ -108,7 +108,7 @@ class BotHandlers():
             self.bot.reply_to(message, text) 
             self.command_use_log("/getusername", username, message.chat.id)
 
-
+# ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
         self.bot.send_message(message.chat.id, self.messages["random_task_level_pick"], reply_markup=markup)
