@@ -36,8 +36,11 @@ class Bot:
          
         #! Это должно быть только на development, нужно сделать переменную в env
         #! и написать if
-        # self.bot.infinity_polling(restart_on_change=True)
-        self.bot.infinity_polling()
+        env = os.getenv("ENVIRONMENT")
+        if env == "DEVELOPMENT":
+            self.bot.infinity_polling(restart_on_change=True)
+        else:
+            self.bot.infinity_polling()  
 
 
 """
