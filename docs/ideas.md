@@ -13,17 +13,13 @@
 
 
 ## багофиксы
-пофиксить "message is too long"
+пофиксить "A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is too long"
+
+перед отправкой random_task форматировать сообщение (убрать хтмл, примеры кода со всех языков вселенной, и тд)
+разделять сообщение на куски, чтобы описание было в отдельном сообщении от остальных
+также, возможно, разделять описание на куски, если оно вдруг слишком длинное
 
 
 
 ## улучшения бэкенда
 добавить уровни доступа (админы/пользователи)
-
-добавить разделение между development и production
-(
-    self.bot.infinity_polling(restart_on_change=True)
-    or
-    self.bot.infinity_polling()
-)
-

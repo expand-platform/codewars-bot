@@ -2,7 +2,7 @@ from requests import get
 from dotenv import load_dotenv
 import os
 
-from telebot import types
+from telebot import types, TeleBot
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.util import quick_markup
 
@@ -23,7 +23,7 @@ class BotHandlers():
         self.admin_ids = os.getenv("ADMIN_IDS")
         self.admin_ids = self.admin_ids.split(",")
 
-        self.bot = bot
+        self.bot: TeleBot = bot
 
         self.parse_mode = "Markdown"
         self.messages = MESSAGES
@@ -145,7 +145,7 @@ class BotHandlers():
                 )
                 text = self.messages["random_task_found"].format(level, bot_reply)
 
-                self.bot.send_message(chat_id, text)
+                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
             else:
                 self.bot.send_message(chat_id, self.messages["random_task_not_found"])
 
