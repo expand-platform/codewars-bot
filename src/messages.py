@@ -6,7 +6,7 @@ MESSAGES = {
     "random_task_level_pick": "What level task do you want to find?",
     "ask_codewars_username": "Type your username in codewars.",
     "tg_username": "Your username is {}",
-    "random_task_on_screen_answer": "You clicked {}",
+    "random_task_on_screen_answer": "You choose {}",
     "random_task_found": "You selected level: {}\n\n{}",
     "random_task_not_found": "No challenge found for the specified level.",
     "find_task_ask_name": "What task do you want to find? Type its name and we will find it for you. (example: Vowel Count)",

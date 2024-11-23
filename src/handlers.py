@@ -2,7 +2,7 @@ from requests import get
 from dotenv import load_dotenv
 import os
 
-from telebot import types
+from telebot import types, TeleBot
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup
 from telebot.util import quick_markup
 
@@ -23,7 +23,7 @@ class BotHandlers():
         self.admin_ids = os.getenv("ADMIN_IDS")
         self.admin_ids = self.admin_ids.split(",")
 
-        self.bot = bot
+        self.bot: TeleBot = bot
 
         self.parse_mode = "Markdown"
         self.messages = MESSAGES
@@ -60,7 +60,7 @@ class BotHandlers():
             if str(chat_id) == str(value):
                 pass
             else:
-                self.bot.send_message(value, f"Пользователь {tg_user} перешёл в раздел {command}")
+                self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
@@ -108,7 +108,7 @@ class BotHandlers():
             self.bot.reply_to(message, text) 
             self.command_use_log("/getusername", username, message.chat.id)
 
-
+# ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
         self.bot.send_message(message.chat.id, self.messages["random_task_level_pick"], reply_markup=markup)
@@ -145,7 +145,7 @@ class BotHandlers():
                 )
                 text = self.messages["random_task_found"].format(level, bot_reply)
 
-                self.bot.send_message(chat_id, text)
+                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
             else:
                 self.bot.send_message(chat_id, self.messages["random_task_not_found"])
 

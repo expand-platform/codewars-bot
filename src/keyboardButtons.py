@@ -8,6 +8,5 @@ keyboard_buttons = {
     "find_task": types.KeyboardButton("Find task 🔍"),
     "load_task": types.KeyboardButton("Load task 🔃"),
     "random_lvltask": types.KeyboardButton("Random task and lvl 🎲"),
-    "help": types.KeyboardButton("Help ❔") 
-    # ! help doesn't work for now      
-}      
+    "help": types.KeyboardButton("Help ❔")
+}
