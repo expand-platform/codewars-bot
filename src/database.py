@@ -11,20 +11,24 @@ class Database:
         connect = os.getenv("MONGO_CONNECT")
         self.client = MongoClient(connect)
 
-        self.users_db = self.client['bot-users']
-        self.users_collection: Collection = self.users_db['users']
+        database_name = "codewars_bot"
         
-        self.challenges_db = self.client['codewars-challenges']
-        self.challenges_collection: Collection = self.challenges_db['challenges']
+        self.database = self.client[database_name]
+        
+        self.users_collection: Collection = self.database['users']
+        self.challenges_collection: Collection = self.database['challenges']
 
-    def new_user(self, username: str, userlvl: int):
-        """Функция создаёт нового юзера, сюда кидаем юзернейм и его уровень (скорее всего уровень будет 0, так как пользователь новый)"""
-        filter = {"name": username}
-        user = self.users_collection.find_one(filter)
+    def new_user(self, username: str, userlvl: int, cw_login: str):
+        """Функция создаёт нового юзера, сюда кидаем юзернейм и его уровень (скорее всего уровень будет 0, так как пользователь новый)
+        cw = code wars
+        """
+        tguser_filter = {"tg_username": username}
+        cw_name_filter = {"cw_nickname": cw_login}
+        user = self.users_collection.find_one(tguser_filter)
         if user:
             print(f"Пользователь с юзернеймом {username} уже существует.")
         else:
-            document = {"name": username, "lvl": userlvl}
+            document = {"tg_username": username, "lvl": userlvl, "cw_nickname": cw_login}
             self.users_collection.insert_one(document)
             print(f"Создан пользователь с юзернеймом {username} и {userlvl} уровнем.")
 
