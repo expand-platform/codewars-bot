@@ -57,7 +57,7 @@ class BotHandlers():
             if str(chat_id) == str(value):
                 pass
             else:
-                self.bot.send_message(value, f"Пользователь {tg_user} перешёл в раздел {command}")
+                self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
