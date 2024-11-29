@@ -10,7 +10,19 @@
 
 добавить команде help пользу
 
+идея по поводу удобства пользователя и языков: сделать 3 разных файла с сообщениями бота (к примеру messages_eng.py, messages_ru.py и messages_ukr.py), а также сделать команду для смены языка, но для этого нужно сделать коллекцию в датабазе с пользователями, и сделать им параметр desired language (по умолчанию en)
+примерный формат решения: мы создаём три файла, а потом создаём функцию которая проверяет какой язык выбран у пользователя, что-то вроде 
+text = language(message)
 
+language(message):
+    if desired_language == eng:
+        return messages_eng[message]
+    elif desired_language == ukr:
+        return messages_ukr[message]
+    else:
+        return messages_ru[message]
+что-то вроде этого, но для начала нужна база данных с пользователями
+(надо было переносить базу данных а другой акк, а в итоге придумал решение вообще другой задачи)
 
 ## багофиксы
 пофиксить "A request to the Telegram API was unsuccessful. Error code: 400. Description: Bad Request: message is too long"
