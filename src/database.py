@@ -18,26 +18,30 @@ class Database:
         self.users_collection: Collection = self.database['users']
         self.challenges_collection: Collection = self.database['challenges']
 
-    def new_user(self, username: str, userlvl: int, cw_login: str):
+    def new_user(self, username: str, cw_login: str):
         """Функция создаёт нового юзера, сюда кидаем юзернейм и его уровень (скорее всего уровень будет 0, так как пользователь новый)
         cw = code wars
         """
         tguser_filter = {"tg_username": username}
-        cw_name_filter = {"cw_nickname": cw_login}
         user = self.users_collection.find_one(tguser_filter)
         if user:
             print(f"Пользователь с юзернеймом {username} уже существует.")
         else:
-            document = {"tg_username": username, "lvl": userlvl, "cw_nickname": cw_login}
+            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG"}
             self.users_collection.insert_one(document)
-            print(f"Создан пользователь с юзернеймом {username} и {userlvl} уровнем.")
+            print(f"Создан пользователь с юзернеймом {username}.")
 
-    def update_user(self, username: str, userlvl: int):
-        """Функция меняет пользователю уровень, сюда кидаем юзернейм и новый уровень для пользователя"""
+    def update_codewars_nickname(self, username: str, cw_login: str):
         filter = {"name": username}
-        update = {"$set": {"lvl": userlvl}}
+        update = {"$set": {"cw_nickname": cw_login}}
         self.users_collection.update_one(filter, update, upsert=False)
-        print(f"Пользователю {username} выдан {userlvl} уровень.")
+        print(f"Пользователю {username} привязан никнейм {cw_login} на кодварс.")
+
+    def update_user_language(self, username: str, lang: str):
+        filter = {"name": username}
+        update = {"$set": {"desired_language": lang}}
+        self.users_collection.update_one(filter, update, upsert=False)
+        print(f"Пользователю {username} привязан {lang} язык")
 
     def pull_user(self, username: str):
         """Эта функция находит данные пользователя (например уровень), имея только юзернейм, в эту функцию нужно кидать только юзернейм"""
