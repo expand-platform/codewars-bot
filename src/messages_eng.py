@@ -16,4 +16,5 @@ MESSAGES_ENG = {
     "check_stats_error": "There was an error while checking stats of that user.\n\nDouble-check the name of your user and try again.",
     "change_language": "Which language is better for you?",
     "language_changed": "You changed language to English.",
+    "random_task_n_lvl": "Your random task by random level is: \n{}",
 }
