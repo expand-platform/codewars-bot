@@ -14,5 +14,5 @@ MESSAGES_ENG = {
     "random_text_reply": "Use a command from the menu.",
     "load_tasks_error": "There was an error while loading tasks.\n\nMaybe you typed wrong username, or this user does not have any completed challenges?",
     "check_stats_error": "There was an error while checking stats of that user.\n\nDouble-check the name of your user and try again.",
-    "help": "This is unofficial Codewars bot for every developer. Here you can find different tasks for different languages.\n\nIf you have any question, feel free to reach us here: @damir_expand"
+    "help": "Welcome to the unofficial Codewars bot for developers. Here, you can explore a variety of coding challenges across multiple programming languages.\n\nFor any inquiries or assistance, please feel free to contact us at: @damir_expand",
 }
