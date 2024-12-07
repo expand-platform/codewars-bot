@@ -270,7 +270,7 @@ class BotHandlers():
                 self.bot.send_message(message.chat.id, "Not in service yet)))")
         
             elif message.text == "Help ❔":
-                self.bot.send_message(message.chat.id, "No help, ur alone in this world)))")
+                self.bot.send_message(message.chat.id, self.messages["help"])
              
             else:
                 self.bot.send_message(message.chat.id, self.messages["random_text_reply"])     
