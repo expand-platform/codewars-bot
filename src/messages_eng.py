@@ -14,4 +14,6 @@ MESSAGES_ENG = {
     "random_text_reply": "Use a command from the menu.",
     "load_tasks_error": "There was an error while loading tasks.\n\nMaybe you typed wrong username, or this user does not have any completed challenges?",
     "check_stats_error": "There was an error while checking stats of that user.\n\nDouble-check the name of your user and try again.",
+    "change_language": "Which language is better for you?",
+    "language_changed": "You changed language to English.",
 }

@@ -32,27 +32,27 @@ class Database:
             print(f"Создан пользователь с юзернеймом {username}.")
 
     def update_codewars_nickname(self, username: str, cw_login: str):
-        filter = {"name": username}
+        filter = {"tg_username": username}
         update = {"$set": {"cw_nickname": cw_login}}
         self.users_collection.update_one(filter, update, upsert=False)
         print(f"Пользователю {username} привязан никнейм {cw_login} на кодварс.")
 
     def update_user_language(self, username: str, lang: str):
-        filter = {"name": username}
+        filter = {"tg_username": username}
         update = {"$set": {"desired_language": lang}}
         self.users_collection.update_one(filter, update, upsert=False)
         print(f"Пользователю {username} привязан {lang} язык")
 
-    def pull_user(self, username: str):
+    def pull_user_lang(self, username: str):
         """Эта функция находит данные пользователя (например уровень), имея только юзернейм, в эту функцию нужно кидать только юзернейм"""
-        filter = {"name": username}
-        user = self.users_collection.find_one(filter)
+        filter = {"tg_username": username}
+        user = self.users_collection.find_one(filter) 
 
         # Проверка, найден ли пользователь
         if user:
-            lvl = user.get("lvl")
-            print(f"Уровень пользователя {username} - {lvl}")
-            return lvl
+            lang = user.get("desired_language")
+            print(f"Пользователь с именем '{username}' найден.")
+            return lang
         else:
             print(f"Пользователь с именем '{username}' не найден в базе данных.")
             return
