@@ -145,7 +145,7 @@ class BotHandlers():
 
     def random_level_and_task(self, message):
         self.bot.send_dice(message.chat.id, emoji="🎲")
-        
+        username = message.from_user.username
         
         challanges = list(self.database.challenges_collection.find({}))
         random_task = random.choice(challanges)
@@ -157,7 +157,8 @@ class BotHandlers():
                     f"Codewars link: {random_task['Codewars link']}"
                 )
         
-        text = self.language["random_task_n_lvl"].format(bot_reply)
+        bot_message = self.lang("random_task_n_lvl", username) 
+        text = bot_message.format(bot_reply)
         
         time.sleep(4)
         
