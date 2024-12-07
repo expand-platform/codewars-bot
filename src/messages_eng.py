@@ -1,11 +1,10 @@
-MESSAGES = {
-    "start_bot": "Hi {}, this is an IT teacher bot. Press menu button for command list.",
+MESSAGES_ENG = {
+    "start_bot": "Hi {}, this is an IT teacher bot.",
     "load_challenges_intro": "Let's steal some challenges from a codewars user.\n\nType a codewars username:",
     "load_challenges_count": "{} challenges. This is exact number of challenges we're going to steal (sorry, save) from user {}.\n\nIt might take some time, be patient...\n\nLet's get started...",
     "load_challenges_final": "Approximately {} challenges were loaded into database.",
     "random_task_level_pick": "What level task do you want to find?",
     "ask_codewars_username": "Type your username in codewars.",
-    "tg_username": "Your username is {}",
     "random_task_on_screen_answer": "You choose {}",
     "random_task_found": "You selected level: {}\n\n{}",
     "random_task_not_found": "No challenge found for the specified level.",
