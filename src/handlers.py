@@ -69,16 +69,26 @@ class BotHandlers():
         username = message.from_user.username
         markup = quick_markup(values=lang_buttons, row_width=1)
         bot_message = self.lang("change_language", username)
-        self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
+        sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
 
-        @self.bot.callback_query_handler(func=lambda call: True)
+        @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def lang_change_callback(call: CallbackQuery):
             lang = call.data
             username = call.from_user.username
 
+            # Обновляем язык в базе данных
             self.database.update_user_language(username, lang)
             bot_message = self.lang("language_changed", username)
-            self.bot.send_message(message.chat.id, bot_message)  
+
+            # Удаляем кнопки, заменяя их пустой разметкой
+            self.bot.edit_message_reply_markup(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=None
+            )
+
+            # Отправляем сообщение о смене языка
+            self.bot.send_message(call.message.chat.id, bot_message)
             
 
     def lang(self, message, username):
@@ -178,26 +188,36 @@ class BotHandlers():
         markup = quick_markup(values=lvl_buttons, row_width=2)
         username = message.from_user.username
         bot_message = self.lang("random_task_level_pick", username)
-        self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
+
+        # Отправляем сообщение с кнопками
+        sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
         self.command_use_log("/random_task", username, message.chat.id)
 
-
-        """случайная задача из коллекции"""
-        @self.bot.callback_query_handler(func=lambda call: True)
+        """Случайная задача из коллекции"""
+        @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def random_task(call):
             chat_id = call.message.chat.id
 
+            # Получаем уровень из данных кнопки
             level = call.data.replace('_', ' ')
             bot_callback = self.lang("random_task_on_screen_answer", username)
             callback_text = bot_callback.format(level)
             self.bot.answer_callback_query(call.id, callback_text)
 
+            # Удаляем кнопки после нажатия
+            self.bot.edit_message_reply_markup(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=None
+            )
+
+            # Создаём фильтр для случайной задачи
             filter = [
                 {"$match": {"Rank.name": level}},
                 {"$sample": {"size": 1}}
             ]
 
-            # Random task from database by level
+            # Получаем случайную задачу из базы данных
             result = list(self.database.challenges_collection.aggregate(filter))
 
             if result:
@@ -212,11 +232,11 @@ class BotHandlers():
                 bot_message = self.lang("random_task_found", username)
                 text = bot_message.format(level, bot_reply)
 
+                # Отправляем задачу пользователю
                 self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
             else:
                 bot_message = self.lang("random_task_not_found", username)
                 self.bot.send_message(chat_id, bot_message)
-
 
     def find_task_command(self, message):
         """Поиск задачи из кодварса по названию"""
