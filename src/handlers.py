@@ -17,6 +17,9 @@ from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
 
+import time
+import random
+
 # с кнопками есть баги, клава иногда не появляется, по фикшу на уроке
 
 class BotHandlers():
@@ -36,6 +39,7 @@ class BotHandlers():
         self.keyboard_buttons = keyboard_buttons
         
         self.markup = None
+        
     
     
     def start_handlers(self):
@@ -70,6 +74,7 @@ class BotHandlers():
     def start(self, message):
             markup = self.create_keyboard()
 
+            
             #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
             #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
             
@@ -110,6 +115,35 @@ class BotHandlers():
             self.bot.reply_to(message, user_stats)
         except:
             self.bot.reply_to(message, self.language["check_stats_error"])
+
+    def random_level_and_task(self, message):
+        self.bot.send_dice(message.chat.id, emoji="🎲")
+        
+        
+        challanges = list(self.database.challenges_collection.find({}))
+        random_task = random.choice(challanges)
+        
+        bot_reply = (
+                    f"Challenge name: {random_task['Challenge name']}\n\n"
+                    f"Description: {random_task['Description']}\n\n"
+                    f"Rank: {random_task['Rank']['name']}\n\n"
+                    f"Codewars link: {random_task['Codewars link']}"
+                )
+        
+        text = self.language["random_task_n_lvl"].format(bot_reply)
+        
+        time.sleep(4)
+        
+        self.bot.send_message(message.chat.id, text, parse_mode=self.parse_mode)
+        
+        
+        
+        
+        
+        # self.bot.send_message(message.chat.id, "hehehehe...")
+
+
+
 
 # ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
@@ -270,7 +304,7 @@ class BotHandlers():
                 self.load_challenges_command(message)
                 
             elif message.text == "Random task and lvl 🎲":
-                self.bot.send_message(message.chat.id, "Not in service yet)))")
+                self.random_level_and_task(message)
         
             elif message.text == "Help ❔":
                 self.bot.send_message(message.chat.id, self.messages["help"])
