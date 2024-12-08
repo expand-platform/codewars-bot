@@ -1,6 +1,6 @@
 from requests import get
 from dotenv import load_dotenv
-import os
+import os 
 
 from telebot import types, TeleBot
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -26,7 +26,7 @@ class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
         self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids = self.admin_ids.split(",")
+        self.admin_ids = self.admin_ids.split(",") 
 
         self.bot: TeleBot = bot
 
@@ -368,8 +368,9 @@ class BotHandlers():
                 self.lang_change(message)
         
             elif message.text == "Help ❔":
-                self.bot.send_message(message.chat.id, self.messages["help"])
-             
+                username = message.from_user.username
+                bot_message = self.lang("help", username)  
+                self.bot.send_message(message.chat.id, bot_message)
             else:
                 username = message.from_user.username
                 bot_message = self.lang("random_text_reply", username) 
