@@ -59,14 +59,17 @@ class BotHandlers():
         return markup
     
     def command_use_log(self, command, tg_user, chat_id):
-        for value in self.admin_ids: 
-            if str(chat_id) == str(value):
-                pass
-            else:
-                self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+        env = os.getenv("ENVIRONMENT") 
+        if env == "PRODUCTION":
+            for value in self.admin_ids: 
+                if str(chat_id) == str(value):
+                    pass
+                else:
+                    self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
 
     def lang_change(self, message: Message):
         username = message.from_user.username
+        self.command_use_log("/language_change", username, message.chat.id)
         markup = quick_markup(values=lang_buttons, row_width=1)
         bot_message = self.lang("change_language", username)
         sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
@@ -127,7 +130,7 @@ class BotHandlers():
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
-        @self.bot.message_handler(commands=["start"], func=lambda message: True)
+        @self.bot.message_handler(commands=["start"], func=lambda message: True) 
         def echo(message):
             self.start(message)
             
@@ -156,6 +159,7 @@ class BotHandlers():
     def random_level_and_task(self, message):
         self.bot.send_dice(message.chat.id, emoji="🎲")
         username = message.from_user.username
+        self.command_use_log("/random_level_and_task", username, message.chat.id)
         
         challanges = list(self.database.challenges_collection.find({}))
         random_task = random.choice(challanges)
@@ -369,6 +373,7 @@ class BotHandlers():
         
             elif message.text == "Help ❔":
                 username = message.from_user.username
+                self.command_use_log("/help", username, message.chat.id)
                 bot_message = self.lang("help", username)  
                 self.bot.send_message(message.chat.id, bot_message)
             else:
