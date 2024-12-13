@@ -1,5 +1,5 @@
 MESSAGES_ENG = {
-    "start_bot": "Hi {}, this is an IT teacher bot. Please send me your Codewars nickname so, i can log you in",
+    "start_bot": "Hi {}, this is an IT teacher bot. I reckon you to authorize into your Codewars account so, you can manage our bot easier, to do that press the authorize button 👇",
     "load_challenges_intro": "Let's steal some challenges from a codewars user.\n\nType a codewars username:",
     "load_challenges_count": "{} challenges. This is exact number of challenges we're going to steal (sorry, save) from user {}.\n\nIt might take some time, be patient...\n\nLet's get started...",
     "load_challenges_final": "Approximately {} challenges were loaded into database.",
@@ -18,4 +18,8 @@ MESSAGES_ENG = {
     "language_changed": "You changed language to English.",
     "help": "Welcome to the unofficial Codewars bot for developers. Here, you can explore a variety of coding challenges across multiple programming languages.\n\nFor any inquiries or assistance, please feel free to contact us at: @damir_expand",
     "random_task_n_lvl": "Your random task by random level is: \n{}",
+    "user_profile": "Codewars nickname: {}\n\nHonor: {} \n\nTasks done: {}",
+    "asking_cwusername": "Send me your Codewars username",
+    "successful_authorization": "You've been successfuly logged into your Codewars account 😁",
+    "authorization_error": "Error occurred during authorization",
 }
