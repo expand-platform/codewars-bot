@@ -135,7 +135,7 @@ class BotHandlers():
             
     def authorization(self, message):
         username = message.from_user.username
-        self.command_use_log("/start", username, message.chat.id)
+        self.command_use_log("/authorize", username, message.chat.id)
 
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,

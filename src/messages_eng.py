@@ -21,5 +21,5 @@ MESSAGES_ENG = {
     "user_profile": "Codewars nickname: {}\n\nHonor: {} \n\nTasks done: {}",
     "asking_cwusername": "Send me your Codewars username",
     "successful_authorization": "You've been successfuly logged into your Codewars account 😁",
-    "authorization_error": "Error occurred during authorization",
+    "authorization_error": "Error occurred during authorization 😣",
 }
