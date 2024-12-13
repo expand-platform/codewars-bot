@@ -1,5 +1,3 @@
-from telebot.types import InlineKeyboardButton
-
 lvl_buttons = {
     "8 Kyu": {"callback_data": "8_kyu"},
     "1 Dan": {"callback_data": "1_dan"},
@@ -17,4 +15,10 @@ lvl_buttons = {
     "7 Dan": {"callback_data": "7_dan"},
     "1 Kyu": {"callback_data": "1_kyu"},
     "8 Dan": {"callback_data": "8_dan"}  
+}
+
+lang_buttons = {
+    "English": {"callback_data": "ENG"},
+    "Русский": {"callback_data": "RUS"},
+    "Українська": {"callback_data": "UKR"}
 }

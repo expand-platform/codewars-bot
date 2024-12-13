@@ -1,15 +1,15 @@
 from requests import get
 from dotenv import load_dotenv
-import os
+import os 
 
 from telebot import types, TeleBot
-from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup
+from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
 
 from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
-from src.inline_buttons import lvl_buttons
+from src.inline_buttons import lvl_buttons, lang_buttons
 from src.helpers import transform_challenge_string
 
 from src.codewars_api_get import Codewars_Challenges
@@ -26,12 +26,14 @@ class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
         self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids = self.admin_ids.split(",")
+        self.admin_ids = self.admin_ids.split(",") 
 
         self.bot: TeleBot = bot
 
         self.parse_mode = "Markdown"
-        self.language = MESSAGES_ENG
+        self.eng_language = MESSAGES_ENG
+        self.rus_language = MESSAGES_RUS
+        self.ukr_language = MESSAGES_UKR
 
         self.database = Database()
         self.codewars_api = Codewars_Challenges()
@@ -44,11 +46,6 @@ class BotHandlers():
     
     def start_handlers(self):
         self.start_command()
-        # self.check_stats_command() 
-        # self.get_username_command()
-        # self.random_task_command()
-        # self.find_task_command()
-        # self.load_challenges_command()
         self.handle_random_text() 
         
     def create_keyboard(self):
@@ -57,18 +54,58 @@ class BotHandlers():
         
         markup.add(self.keyboard_buttons["get_username"], self.keyboard_buttons["check_stats"], self.keyboard_buttons["random_task"])
         markup.add(self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"], self.keyboard_buttons["random_lvltask"])
-        markup.add(self.keyboard_buttons["help"])
+        markup.add(self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
     
     def command_use_log(self, command, tg_user, chat_id):
-        for value in self.admin_ids: 
-            if str(chat_id) == str(value):
-                pass
-            else:
-                self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+        env = os.getenv("ENVIRONMENT") 
+        if env == "PRODUCTION":
+            for value in self.admin_ids: 
+                if str(chat_id) == str(value):
+                    pass
+                else:
+                    self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
 
-    # def lang_check(self, message):
+    def lang_change(self, message: Message):
+        username = message.from_user.username
+        self.command_use_log("/language_change", username, message.chat.id)
+        markup = quick_markup(values=lang_buttons, row_width=1)
+        bot_message = self.lang("change_language", username)
+        sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
+
+        @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
+        def lang_change_callback(call: CallbackQuery):
+            lang = call.data
+            username = call.from_user.username
+
+            # Обновляем язык в базе данных
+            self.database.update_user_language(username, lang)
+            bot_message = self.lang("language_changed", username)
+
+            # Удаляем кнопки, заменяя их пустой разметкой
+            self.bot.edit_message_reply_markup(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=None
+            )
+
+            # Отправляем сообщение о смене языка
+            self.bot.send_message(call.message.chat.id, bot_message)
+            
+
+    def lang(self, message, username):
+        lang = self.database.pull_user_lang(username)
+        print(lang)
+        if lang == "ENG":
+            message = self.eng_language[message]
+            return message
+        elif lang == "RUS":
+            message = self.rus_language[message]
+            return message
+        elif lang == "UKR":
+            message = self.ukr_language[message]
+            return message
         
 
     def start(self, message):
@@ -81,7 +118,8 @@ class BotHandlers():
             username = message.from_user.username
             self.database.new_user(username, "None")
 
-            text = self.language["start_bot"].format(username)
+            bot_message = self.lang("start_bot", username)
+            text = bot_message.format(username)
             
             print("user chat id:", message.chat.id)
             self.bot.send_message(message.chat.id, text, reply_markup=markup) 
@@ -92,18 +130,19 @@ class BotHandlers():
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
-        @self.bot.message_handler(commands=["start"], func=lambda message: True)
+        @self.bot.message_handler(commands=["start"], func=lambda message: True) 
         def echo(message):
             self.start(message)
             
             
     def check_stats_command(self, message): 
+            username = message.from_user.username
+            message_format = self.lang("ask_codewars_username", username)
             bot_message = self.bot.send_message(
                 chat_id=message.chat.id, 
-                text=self.language["ask_codewars_username"], 
+                text=message_format, 
                 parse_mode=self.parse_mode
             )
-            username = message.from_user.username
             self.command_use_log("/check_stats", username, message.chat.id)
             self.bot.register_next_step_handler(message=bot_message, callback=self.check_stats_response)
 
@@ -114,11 +153,13 @@ class BotHandlers():
             user_stats = self.codewars_api.check_user_stats(message.text, tg_username)
             self.bot.reply_to(message, user_stats)
         except:
-            self.bot.reply_to(message, self.language["check_stats_error"])
+            bot_message = self.lang("check_stats_error", tg_username)
+            self.bot.reply_to(message, bot_message)
 
     def random_level_and_task(self, message):
         self.bot.send_dice(message.chat.id, emoji="🎲")
-        
+        username = message.from_user.username
+        self.command_use_log("/random_level_and_task", username, message.chat.id)
         
         challanges = list(self.database.challenges_collection.find({}))
         random_task = random.choice(challanges)
@@ -130,7 +171,8 @@ class BotHandlers():
                     f"Codewars link: {random_task['Codewars link']}"
                 )
         
-        text = self.language["random_task_n_lvl"].format(bot_reply)
+        bot_message = self.lang("random_task_n_lvl", username) 
+        text = bot_message.format(bot_reply)
         
         time.sleep(4)
         
@@ -148,27 +190,38 @@ class BotHandlers():
 # ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
-        self.bot.send_message(message.chat.id, self.language["random_task_level_pick"], reply_markup=markup)
         username = message.from_user.username
+        bot_message = self.lang("random_task_level_pick", username)
+
+        # Отправляем сообщение с кнопками
+        sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
         self.command_use_log("/random_task", username, message.chat.id)
 
-
-        """случайная задача из коллекции"""
-        @self.bot.callback_query_handler(func=lambda call: True)
+        """Случайная задача из коллекции"""
+        @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def random_task(call):
             chat_id = call.message.chat.id
 
+            # Получаем уровень из данных кнопки
             level = call.data.replace('_', ' ')
+            bot_callback = self.lang("random_task_on_screen_answer", username)
+            callback_text = bot_callback.format(level)
+            self.bot.answer_callback_query(call.id, callback_text)
 
-            text = self.language["random_task_on_screen_answer"].format(level)
-            self.bot.answer_callback_query(call.id, text)
+            # Удаляем кнопки после нажатия
+            self.bot.edit_message_reply_markup(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                reply_markup=None
+            )
 
+            # Создаём фильтр для случайной задачи
             filter = [
                 {"$match": {"Rank.name": level}},
                 {"$sample": {"size": 1}}
             ]
 
-            # Random task from database by level
+            # Получаем случайную задачу из базы данных
             result = list(self.database.challenges_collection.aggregate(filter))
 
             if result:
@@ -180,32 +233,38 @@ class BotHandlers():
                     f"Rank: {challenge['Rank']['name']}\n\n"
                     f"Codewars link: {challenge['Codewars link']}"
                 )
-                text = self.language["random_task_found"].format(level, bot_reply)
+                bot_message = self.lang("random_task_found", username)
+                text = bot_message.format(level, bot_reply)
 
+                # Отправляем задачу пользователю
                 self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
             else:
-                self.bot.send_message(chat_id, self.language["random_task_not_found"])
-
+                bot_message = self.lang("random_task_not_found", username)
+                self.bot.send_message(chat_id, bot_message)
 
     def find_task_command(self, message):
         """Поиск задачи из кодварса по названию"""
+        username = message.from_user.username
+        message_format = self.lang("find_task_ask_name", username)
         bot_message = self.bot.send_message(
             chat_id=message.chat.id, 
-            text=self.language["find_task_ask_name"], 
+            text=message_format, 
             parse_mode=self.parse_mode
         )
-        username = message.from_user.username
-        self.command_use_log("/find_task", username, message.chat.id)
+        self.command_use_log("/find_task", username, message.chat.id) 
         self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
  
 
     def find_task_response(self, message):
+        username = message.from_user.username
         result = transform_challenge_string(message)
         challenge = self.codewars_api.get_challenge_info_by_slug(result)  
         if challenge == 404:
-            self.bot.reply_to(message, self.language["find_task_not_found"])
+            bot_message = self.lang("find_task_not_found", username)
+            self.bot.reply_to(message, bot_message)
         else:
-            text = self.language["find_task_found"].format(challenge["Challenge name"], challenge["Description"], list(challenge["Rank"].values())[1], challenge["Codewars link"])
+            bot_message = self.lang("find_task_found", username)
+            text = bot_message.format(challenge["Challenge name"], challenge["Description"], list(challenge["Rank"].values())[1], challenge["Codewars link"])
             filter = {"Slug": result}
             challenge_check = self.database.challenges_collection.find_one(filter)
             print(challenge_check)
@@ -217,23 +276,25 @@ class BotHandlers():
 
            
     def load_challenges_command(self, message):
-        """ load tasks from another user, saves them to db """          
+        """ load tasks from another user, saves them to db """  
+        username = message.from_user.username
+        message_format = self.lang("load_challenges_intro", username)        
         bot_message = self.bot.send_message(
             chat_id=message.chat.id, 
-            text=self.language["load_challenges_intro"], 
+            text=message_format, 
             parse_mode=self.parse_mode
         )
-        username = message.from_user.username
         self.command_use_log("/load_tasks", username, message.chat.id)
         self.bot.register_next_step_handler(message=bot_message, callback=self.load_challenges_final_step)
                 
                 
     def load_challenges_final_step(self, message: Message):
-        username = message.text
-        print("🐍 CD user_name (load_tasks_send_request)", username)
+        username = message.from_user.username
+        cw_username = message.text
+        print("🐍 CD user_name (load_tasks_send_request)", cw_username)
         
         # send request to API
-        user_challenges_URL = f"https://www.codewars.com/api/v1/users/{username}/code-challenges/completed" 
+        user_challenges_URL = f"https://www.codewars.com/api/v1/users/{cw_username}/code-challenges/completed" 
         
         try:
             response = get(url=user_challenges_URL)
@@ -242,8 +303,8 @@ class BotHandlers():
             challenges_count = data_from_api["totalItems"] 
             # except:
             #     self.bot.send_message(message.chat.id, )
-            
-            bot_reply_text = self.language["load_challenges_count"].format(challenges_count,username)
+            bot_message = self.lang("load_challenges_count", username)   
+            bot_reply_text = bot_message.format(challenges_count,cw_username)
             print(bot_reply_text)
             
             self.bot.send_message(
@@ -268,8 +329,8 @@ class BotHandlers():
                     if challenge:
                         self.database.save_challenge(new_challenge=challenge_info)
                         
-                        
-            bot_final_message_text = self.language["load_challenges_final"].format(challenges_count) 
+            bot_message = self.lang("load_challenges_final", username)   
+            bot_final_message_text = bot_message.format(challenges_count) 
                     
             self.bot.send_message(
                 chat_id=message.chat.id, 
@@ -277,9 +338,10 @@ class BotHandlers():
                 parse_mode=self.parse_mode
             )
         except:
+            bot_message = self.lang("load_tasks_error", username) 
             self.bot.send_message(
                 chat_id=message.chat.id, 
-                text=self.language["load_tasks_error"], 
+                text=bot_message, 
                 parse_mode=self.parse_mode
             )
 
@@ -305,10 +367,17 @@ class BotHandlers():
                 
             elif message.text == "Random task and lvl 🎲":
                 self.random_level_and_task(message)
+            
+            elif message.text == "Language 🌐":
+                self.lang_change(message)
         
             elif message.text == "Help ❔":
-                self.bot.send_message(message.chat.id, "No help, ur alone in this world)))")
-             
+                username = message.from_user.username
+                self.command_use_log("/help", username, message.chat.id)
+                bot_message = self.lang("help", username)  
+                self.bot.send_message(message.chat.id, bot_message)
             else:
-                self.bot.send_message(message.chat.id, self.language["random_text_reply"])     
+                username = message.from_user.username
+                bot_message = self.lang("random_text_reply", username) 
+                self.bot.send_message(message.chat.id, bot_message)      
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
