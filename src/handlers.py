@@ -1,6 +1,6 @@
 from requests import get
 from dotenv import load_dotenv
-import os
+import os 
 
 from telebot import types, TeleBot
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -26,7 +26,7 @@ class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
         self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids = self.admin_ids.split(",")
+        self.admin_ids = self.admin_ids.split(",") 
 
         self.bot: TeleBot = bot
 
@@ -52,21 +52,24 @@ class BotHandlers():
         # * КОГДА ДОБАВЛЯЕТЕ НОВУЮ КОММАНДУ В KEYBOARDBUTTON СТАРАЙТЕСЬ РАВНОМЕРНО ДЕЛАТЬ (ОДНА СТРОЧКА С MARKUP.ADD ЭТО ОДНА ГОРИЗОНТАЛЬНАЯ ГРУПА)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
         
-        markup.add(self.keyboard_buttons["get_username"], self.keyboard_buttons["check_stats"], self.keyboard_buttons["random_task"])
-        markup.add(self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"], self.keyboard_buttons["random_lvltask"])
-        markup.add(self.keyboard_buttons["language"], self.keyboard_buttons["help"])
+        markup.add(self.keyboard_buttons["start"], self.keyboard_buttons["authorize"], self.keyboard_buttons["check_stats"])
+        markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"])
+        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
     
     def command_use_log(self, command, tg_user, chat_id):
-        for value in self.admin_ids: 
-            if str(chat_id) == str(value):
-                pass
-            else:
-                self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+        env = os.getenv("ENVIRONMENT") 
+        if env == "PRODUCTION":
+            for value in self.admin_ids: 
+                if str(chat_id) == str(value):
+                    pass
+                else:
+                    self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
 
     def lang_change(self, message: Message):
         username = message.from_user.username
+        self.command_use_log("/language_change", username, message.chat.id)
         markup = quick_markup(values=lang_buttons, row_width=1)
         bot_message = self.lang("change_language", username)
         sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
@@ -107,7 +110,6 @@ class BotHandlers():
 
     def start(self, message):
             markup = self.create_keyboard()
-
             
             #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
             #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
@@ -127,11 +129,38 @@ class BotHandlers():
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
-        @self.bot.message_handler(commands=["start"], func=lambda message: True)
+        @self.bot.message_handler(commands=["start"], func=lambda message: True) 
         def echo(message):
             self.start(message)
             
+    def authorization(self, message):
+        username = message.from_user.username
+        self.command_use_log("/authorize", username, message.chat.id)
+
+        bot_message = self.bot.send_message(
+            chat_id=message.chat.id,
+            text=self.lang("asking_cwusername", username),
+            parse_mode=self.parse_mode,
+        )
+        
+        self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
+        
+    def authorization_ans(self, message):
+        username = message.from_user.username
+        
+        try:
+            self.database.update_codewars_nickname(username, message.text)
+            self.bot.send_message(message.chat.id, self.lang("successful_authorization", username))
             
+        except Exception as e:
+            self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
+        
+            print(e)
+        
+
+                
+    
+    
     def check_stats_command(self, message): 
             username = message.from_user.username
             message_format = self.lang("ask_codewars_username", username)
@@ -156,6 +185,7 @@ class BotHandlers():
     def random_level_and_task(self, message):
         self.bot.send_dice(message.chat.id, emoji="🎲")
         username = message.from_user.username
+        self.command_use_log("/random_level_and_task", username, message.chat.id)
         
         challanges = list(self.database.challenges_collection.find({}))
         random_task = random.choice(challanges)
@@ -369,8 +399,13 @@ class BotHandlers():
         
             elif message.text == "Help ❔":
                 username = message.from_user.username
-                self.bot.send_message(message.chat.id, self.lang("help", username))
-             
+                self.command_use_log("/help", username, message.chat.id)
+                bot_message = self.lang("help", username)  
+                self.bot.send_message(message.chat.id, bot_message)
+                
+            elif message.text == "Authorize ⚙":
+                self.authorization(message)
+            
             else:
                 username = message.from_user.username
                 bot_message = self.lang("random_text_reply", username) 
