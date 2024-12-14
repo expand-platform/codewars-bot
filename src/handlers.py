@@ -17,6 +17,8 @@ from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
 
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 import time
 import random
 
@@ -122,7 +124,8 @@ class BotHandlers():
             
             print("user chat id:", message.chat.id)
             self.bot.send_message(message.chat.id, text, reply_markup=markup) 
-                
+            self.authorization(message)
+            
             self.command_use_log("/start", username, message.chat.id)
             #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
             #? "бот запущен и ждёт команд, нажми /start"
@@ -136,26 +139,41 @@ class BotHandlers():
     def authorization(self, message):
         username = message.from_user.username
         self.command_use_log("/authorize", username, message.chat.id)
+        
+        markup =  InlineKeyboardMarkup()
+        cw_signin_page_button = InlineKeyboardButton(self.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
+        markup.add(cw_signin_page_button)
+        
 
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
             parse_mode=self.parse_mode,
+            reply_markup=markup
         )
         
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
         
     def authorization_ans(self, message):
         username = message.from_user.username
+        user_info = self.codewars_api.getuser_function(message.text, username)
         
-        try:
-            self.database.update_codewars_nickname(username, message.text)
-            self.bot.send_message(message.chat.id, self.lang("successful_authorization", username))
-            
-        except Exception as e:
+        if "reason" in user_info:
+            print("USER ISN'T FOUND")
             self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
         
-            print(e)
+        else:
+            bot_reply = self.lang("successful_authorization", username)
+            
+            cw_username = user_info["username"]
+            honor_lvl = user_info["honor"]
+            tasks_done = user_info['codeChallenges']['totalCompleted']
+            
+            message_text = bot_reply.format(cw_username, honor_lvl, tasks_done)
+            
+            self.database.update_codewars_nickname(username, cw_username)
+            self.bot.send_message(message.chat.id, message_text)
+            
         
 
                 

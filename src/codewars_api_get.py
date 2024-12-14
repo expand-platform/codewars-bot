@@ -10,10 +10,17 @@ class Codewars_Challenges:
         self.bot_token = os.getenv("TOKEN_FOR_TGBOT")
         self.database = Database()
 
-    def check_user_stats(self, codewars_username: str, telegram_username: str):
+    def getuser_function(self, codewars_username: str, telegram_username: str):
         url = f"https://www.codewars.com/api/v1/users/{codewars_username}"
         response = requests.get(url)
         user = response.json()
+        
+        return user
+
+    def check_user_stats(self, codewars_username: str, telegram_username: str):
+        user = self.getuser_function(codewars_username, telegram_username)
+        print("USER: ", user)
+        
         user_info = {
             "Codewars name": user["username"],
             "Telegram name": telegram_username,
