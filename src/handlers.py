@@ -368,7 +368,8 @@ class BotHandlers():
                 self.lang_change(message)
         
             elif message.text == "Help ❔":
-                self.bot.send_message(message.chat.id, self.messages["help"])
+                username = message.from_user.username
+                self.bot.send_message(message.chat.id, self.lang("help", username))
              
             else:
                 username = message.from_user.username
