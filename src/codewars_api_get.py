@@ -40,7 +40,6 @@ class Codewars_Challenges:
         challenge = self.database.challenges_collection.aggregate([{"$sample": {"size": 1}}])
         for i in challenge:
             result = f"Here is a random codewars task:\n\nChallenge name: {i["Challenge name"]}\n\nDescription: {i["Description"]}\n\nRank: {list(i["Rank"].values())[1]}\n\nCodewars link: {i["Codewars link"]}"
-            print("Задача:", i['Challenge name'])
             return result
 
     """достать инфу из конкретной задачи"""
