@@ -174,28 +174,36 @@ class BotHandlers():
             
             self.database.update_codewars_nickname(username, cw_username)
             self.bot.send_message(message.chat.id, message_text)
-            
         
-
-                
-    
-    
     def check_stats_command(self, message): 
             username = message.from_user.username
-            message_format = self.lang("ask_codewars_username", username)
-            bot_message = self.bot.send_message(
-                chat_id=message.chat.id, 
-                text=message_format, 
-                parse_mode=self.parse_mode
-            )
+            
+            filter = {"tg_username": username}
+            user = self.database.users_collection.find_one(filter)
+            
+            if user["cw_nickname"] == "None": 
+                print("USER DOESN'T HAVE CW ACC")
+                message_format = self.lang("ask_codewars_username", username)
+                bot_message = self.bot.send_message(
+                    chat_id=message.chat.id, 
+                    text=message_format, 
+                    parse_mode=self.parse_mode
+                )
+                self.bot.register_next_step_handler(message=bot_message, callback=lambda msg:self.check_stats_response(message, msg.text))
+                
+            else:
+                print("USER HAS CW ACC")
+                self.check_stats_response(message, user["cw_nickname"])
+
             self.command_use_log("/check_stats", username, message.chat.id)
-            self.bot.register_next_step_handler(message=bot_message, callback=self.check_stats_response)
 
-
-    def check_stats_response(self, message):
+    def check_stats_response(self, message, cw_nickname):
         tg_username = message.from_user.username
+
+        self.database.update_codewars_nickname(tg_username, cw_nickname)
+        
         try:
-            user_stats = self.codewars_api.check_user_stats(message.text, tg_username)
+            user_stats = self.codewars_api.check_user_stats(cw_nickname, tg_username)
             self.bot.reply_to(message, user_stats)
         except:
             bot_message = self.lang("check_stats_error", tg_username)
