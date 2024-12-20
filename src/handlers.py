@@ -97,7 +97,6 @@ class BotHandlers():
 
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
-        print(lang)
         if lang == "ENG":
             message = self.eng_language[message]
             return message
@@ -298,7 +297,7 @@ class BotHandlers():
             else:
                 self.database.challenges_collection.insert_one(challenge)
             
-            for i in messages: 
+            for i in messages:        
                 self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
                 
                 
