@@ -17,6 +17,8 @@ from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
 
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 import time
 import random
 
@@ -122,7 +124,8 @@ class BotHandlers():
             
             print("user chat id:", message.chat.id)
             self.bot.send_message(message.chat.id, text, reply_markup=markup) 
-                
+            self.authorization(message)
+            
             self.command_use_log("/start", username, message.chat.id)
             #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
             #? "бот запущен и ждёт команд, нажми /start"
@@ -136,47 +139,70 @@ class BotHandlers():
     def authorization(self, message):
         username = message.from_user.username
         self.command_use_log("/authorize", username, message.chat.id)
+        
+        markup =  InlineKeyboardMarkup()
+        cw_signin_page_button = InlineKeyboardButton(self.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
+        markup.add(cw_signin_page_button)
+        
 
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
             parse_mode=self.parse_mode,
+            reply_markup=markup
         )
         
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
         
     def authorization_ans(self, message):
         username = message.from_user.username
+        user_info = self.codewars_api.getuser_function(message.text, username)
         
-        try:
-            self.database.update_codewars_nickname(username, message.text)
-            self.bot.send_message(message.chat.id, self.lang("successful_authorization", username))
-            
-        except Exception as e:
+        if "reason" in user_info:
+            print("USER ISN'T FOUND")
             self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
         
-            print(e)
+        else:
+            bot_reply = self.lang("successful_authorization", username)
+            
+            cw_username = user_info["username"]
+            honor_lvl = user_info["honor"]
+            tasks_done = user_info['codeChallenges']['totalCompleted']
+            
+            message_text = bot_reply.format(cw_username, honor_lvl, tasks_done)
+            
+            self.database.update_codewars_nickname(username, cw_username)
+            self.bot.send_message(message.chat.id, message_text)
         
-
-                
-    
-    
     def check_stats_command(self, message): 
             username = message.from_user.username
-            message_format = self.lang("ask_codewars_username", username)
-            bot_message = self.bot.send_message(
-                chat_id=message.chat.id, 
-                text=message_format, 
-                parse_mode=self.parse_mode
-            )
+            
+            filter = {"tg_username": username}
+            user = self.database.users_collection.find_one(filter)
+            
+            if user["cw_nickname"] == "None": 
+                print("USER DOESN'T HAVE CW ACC")
+                message_format = self.lang("ask_codewars_username", username)
+                bot_message = self.bot.send_message(
+                    chat_id=message.chat.id, 
+                    text=message_format, 
+                    parse_mode=self.parse_mode
+                )
+                self.bot.register_next_step_handler(message=bot_message, callback=lambda msg:self.check_stats_response(message, msg.text))
+                
+            else:
+                print("USER HAS CW ACC")
+                self.check_stats_response(message, user["cw_nickname"])
+
             self.command_use_log("/check_stats", username, message.chat.id)
-            self.bot.register_next_step_handler(message=bot_message, callback=self.check_stats_response)
 
-
-    def check_stats_response(self, message):
+    def check_stats_response(self, message, cw_nickname):
         tg_username = message.from_user.username
+
+        self.database.update_codewars_nickname(tg_username, cw_nickname)
+        
         try:
-            user_stats = self.codewars_api.check_user_stats(message.text, tg_username)
+            user_stats = self.codewars_api.check_user_stats(cw_nickname, tg_username)
             self.bot.reply_to(message, user_stats)
         except:
             bot_message = self.lang("check_stats_error", tg_username)
