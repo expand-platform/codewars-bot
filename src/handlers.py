@@ -10,12 +10,14 @@ from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons
-from src.helpers import transform_challenge_string
+from src.helpers import Helpers
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
 
 from src.keyboardButtons import keyboard_buttons
+
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import time
 import random
@@ -49,6 +51,7 @@ class BotHandlers():
 
         self.database = Database()
         self.codewars_api = Codewars_Challenges()
+        self.helpers = Helpers()
 
         self.keyboard_buttons = keyboard_buttons
         
@@ -109,7 +112,6 @@ class BotHandlers():
 
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
-        print(lang)
         if lang == "ENG":
             message = self.eng_language[message]
             return message
@@ -135,7 +137,8 @@ class BotHandlers():
             
             print("user chat id:", message.chat.id)
             self.bot.send_message(message.chat.id, text, reply_markup=markup) 
-                
+            self.authorization(message)
+            
             self.command_use_log("/start", username, message.chat.id)
             #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
             #? "бот запущен и ждёт команд, нажми /start"
@@ -148,48 +151,74 @@ class BotHandlers():
             
     def authorization(self, message):
         username = message.from_user.username
+        img_path = "src/images/nickname_example.png"
+        normalised_img_path = os.path.normpath(img_path)
         self.command_use_log("/authorize", username, message.chat.id)
-
+        
+        markup =  InlineKeyboardMarkup()
+        cw_signin_page_button = InlineKeyboardButton(self.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
+        markup.add(cw_signin_page_button)
+        
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
             parse_mode=self.parse_mode,
+            reply_markup=markup
         )
         
+            
+        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
         
     def authorization_ans(self, message):
         username = message.from_user.username
+        user_info = self.codewars_api.getuser_function(message.text, username)
         
-        try:
-            self.database.update_codewars_nickname(username, message.text)
-            self.bot.send_message(message.chat.id, self.lang("successful_authorization", username))
-            
-        except Exception as e:
+        if "reason" in user_info:
+            print("USER ISN'T FOUND")
             self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
         
-            print(e)
+        else:
+            bot_reply = self.lang("successful_authorization", username)
+            
+            cw_username = user_info["username"]
+            honor_lvl = user_info["honor"]
+            tasks_done = user_info['codeChallenges']['totalCompleted']
+            
+            message_text = bot_reply.format(cw_username, honor_lvl, tasks_done)
+            
+            self.database.update_codewars_nickname(username, cw_username)
+            self.bot.send_message(message.chat.id, message_text)
         
-
-                
-    
-    
     def check_stats_command(self, message): 
             username = message.from_user.username
-            message_format = self.lang("ask_codewars_username", username)
-            bot_message = self.bot.send_message(
-                chat_id=message.chat.id, 
-                text=message_format, 
-                parse_mode=self.parse_mode
-            )
+            
+            filter = {"tg_username": username}
+            user = self.database.users_collection.find_one(filter)
+            
+            if user["cw_nickname"] == "None": 
+                print("USER DOESN'T HAVE CW ACC")
+                message_format = self.lang("ask_codewars_username", username)
+                bot_message = self.bot.send_message(
+                    chat_id=message.chat.id, 
+                    text=message_format, 
+                    parse_mode=self.parse_mode
+                )
+                self.bot.register_next_step_handler(message=bot_message, callback=lambda msg:self.check_stats_response(message, msg.text))
+                
+            else:
+                print("USER HAS CW ACC")
+                self.check_stats_response(message, user["cw_nickname"])
+
             self.command_use_log("/check_stats", username, message.chat.id)
-            self.bot.register_next_step_handler(message=bot_message, callback=self.check_stats_response)
 
-
-    def check_stats_response(self, message):
+    def check_stats_response(self, message, cw_nickname):
         tg_username = message.from_user.username
+
+        self.database.update_codewars_nickname(tg_username, cw_nickname)
+        
         try:
-            user_stats = self.codewars_api.check_user_stats(message.text, tg_username)
+            user_stats = self.codewars_api.check_user_stats(cw_nickname, tg_username)
             self.bot.reply_to(message, user_stats)
         except:
             bot_message = self.lang("check_stats_error", tg_username)
@@ -198,33 +227,24 @@ class BotHandlers():
     def random_level_and_task(self, message):
         self.bot.send_dice(message.chat.id, emoji="🎲")
         username = message.from_user.username
+        chat_id = message.chat.id
         self.command_use_log("/random_level_and_task", username, message.chat.id)
         
-        challanges = list(self.database.challenges_collection.find({}))
-        random_task = random.choice(challanges)
+        challenges = list(self.database.challenges_collection.find({}))
+        random_task = random.choice(challenges)
         
-        bot_reply = (
-                    f"Challenge name: {random_task['Challenge name']}\n\n"
-                    f"Description: {random_task['Description']}\n\n"
-                    f"Rank: {random_task['Rank']['name']}\n\n"
-                    f"Codewars link: {random_task['Codewars link']}"
-                )
-        
-        bot_message = self.lang("random_task_n_lvl", username) 
-        text = bot_message.format(bot_reply)
-        
+        messages = [
+        self.lang("task_name", username).format(random_task["Challenge name"]),
+        self.lang("task_description", username).format(random_task['Description']),
+        self.lang("task_rank", username).format(random_task['Rank']['name']),
+        self.lang("task_url", username).format(random_task['Codewars link']),
+        ]
+
         time.sleep(4)
         
-        self.bot.send_message(message.chat.id, text, parse_mode=self.parse_mode)
+        for message in messages:
+            self.bot.send_message(chat_id, message, parse_mode=self.parse_mode)
         
-        
-        
-        
-        
-        # self.bot.send_message(message.chat.id, "hehehehe...")
-
-
-
 
 # ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
@@ -266,17 +286,19 @@ class BotHandlers():
             if result:
                 challenge = result[0]
 
-                bot_reply = (
-                    f"Challenge name: {challenge['Challenge name']}\n\n"
-                    f"Description: {challenge['Description']}\n\n"
-                    f"Rank: {challenge['Rank']['name']}\n\n"
-                    f"Codewars link: {challenge['Codewars link']}"
-                )
-                bot_message = self.lang("random_task_found", username)
-                text = bot_message.format(level, bot_reply)
+                messages = [
+                    self.lang("task_name", username).format(challenge["Challenge name"]),
+                    self.lang("task_description", username).format(challenge['Description']),
+                    self.lang("task_rank", username).format(challenge['Rank']['name']),
+                    self.lang("task_url", username).format(challenge['Codewars link']),
+                ]
 
-                # Отправляем задачу пользователю
-                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+                print("kata name:", challenge["Challenge name"])
+
+                for message in messages:
+                    self.bot.send_message(chat_id, message, parse_mode=self.parse_mode)
+                    
+                # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
                 bot_message = self.lang("random_task_not_found", username)
                 self.bot.send_message(chat_id, bot_message)
@@ -292,26 +314,36 @@ class BotHandlers():
         )
         self.command_use_log("/find_task", username, message.chat.id) 
         self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
- 
 
     def find_task_response(self, message):
         username = message.from_user.username
-        result = transform_challenge_string(message)
+        chat_id = message.chat.id
+        result = self.helpers.transform_challenge_string(message)
         challenge = self.codewars_api.get_challenge_info_by_slug(result)  
+
         if challenge == 404:
             bot_message = self.lang("find_task_not_found", username)
             self.bot.reply_to(message, bot_message)
         else:
-            bot_message = self.lang("find_task_found", username)
-            text = bot_message.format(challenge["Challenge name"], challenge["Description"], list(challenge["Rank"].values())[1], challenge["Codewars link"])
+            messages = [
+                    self.lang("task_name", username).format(challenge["Challenge name"]),
+                    self.lang("task_description", username).format(challenge['Description']),
+                    self.lang("task_rank", username).format(challenge['Rank']['name']),
+                    self.lang("task_url", username).format(challenge['Codewars link']),
+                ]
+
             filter = {"Slug": result}
             challenge_check = self.database.challenges_collection.find_one(filter)
-            print(challenge_check)
             if challenge_check:
                 print("Такая задача уже есть в базе данных, поэтому она не была добавлена в базу.")
             else:
                 self.database.challenges_collection.insert_one(challenge)
-            self.bot.reply_to(message, text)
+            
+            for i in messages:        
+                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                
+                
+                
 
            
     def load_challenges_command(self, message):

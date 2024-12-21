@@ -51,7 +51,6 @@ class Database:
         # Проверка, найден ли пользователь
         if user:
             lang = user.get("desired_language")
-            print(f"Пользователь с именем '{username}' найден.")
             return lang
         else:
             print(f"Пользователь с именем '{username}' не найден в базе данных.")
