@@ -13,7 +13,17 @@ class Helpers():
         lowercase_result = result.lower()
         return lowercase_result
 
-    def split_message(self, text: str, max_length=4096):
+    def split_message(self, text: str, max_length=4095):
+
+        # chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
+
+        # for i, chunk in enumerate(chunks, start=1):
+        #     print(f"Часть {i}: {len(chunk)} символов")
+
+        # return chunks
+
+
+
         parts = []
         new_text = text
         if len(text) > max_length:
@@ -27,3 +37,4 @@ class Helpers():
         return parts
         # ! плохо сделано, потом перепишу, пока не трогать
         # попробовать метод split()
+        # всё не работать и я ничего не понимать
