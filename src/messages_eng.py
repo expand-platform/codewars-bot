@@ -26,5 +26,6 @@ MESSAGES_ENG = {
     "asking_cwusername": "Send me your Codewars username",
     "successful_authorization": "You've been successfuly logged into your Codewars account 😁\n\nCodewars nickname: {}\n\nHonor: {}\n\nTasks done: {}",
     "authorization_error": "Error occurred during authorization 😣 Please press authorize button again ⚙",
-    "codewars_signin_button": "Codewars sign in page"
+    "codewars_signin_button": "Codewars sign in page",
+    "nickname_example": "Example of a nickname, located in your Codewars profile: ",
 }

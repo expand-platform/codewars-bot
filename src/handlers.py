@@ -2,7 +2,7 @@ from requests import get
 from dotenv import load_dotenv
 import os 
 
-from telebot import types, TeleBot
+from telebot import types, TeleBot, custom_filters
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
 
@@ -24,6 +24,18 @@ import random
 
 # с кнопками есть баги, клава иногда не появляется, по фикшу на уроке
 
+class AccessLevel(custom_filters.AdvancedCustomFilter): 
+    key='access_level'
+    @staticmethod
+    def check(message, levels):
+        username = message.from_user.username
+        access_level = Database().get_user_access(username)
+        return access_level in levels
+        # username = message.from_user.username
+        # access_level = Database().get_user_access(username)
+        # return access_level
+
+        
 class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
@@ -49,6 +61,7 @@ class BotHandlers():
     
     def start_handlers(self):
         self.start_command()
+        self.admin_start()
         self.handle_random_text() 
         
     def create_keyboard(self):
@@ -138,13 +151,14 @@ class BotHandlers():
             
     def authorization(self, message):
         username = message.from_user.username
+        img_path = "src/images/nickname_example.png"
+        normalised_img_path = os.path.normpath(img_path)
         self.command_use_log("/authorize", username, message.chat.id)
         
         markup =  InlineKeyboardMarkup()
         cw_signin_page_button = InlineKeyboardButton(self.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
         markup.add(cw_signin_page_button)
         
-
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
@@ -152,6 +166,8 @@ class BotHandlers():
             reply_markup=markup
         )
         
+            
+        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
         
     def authorization_ans(self, message):
@@ -419,7 +435,13 @@ class BotHandlers():
                 text=bot_message, 
                 parse_mode=self.parse_mode
             )
-
+    def admin_test(self, message):
+        self.bot.reply_to(message, "Only admin can see this message!")
+        
+    def admin_start(self):
+        @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
+        def admin(message):
+            self.admin_test(message)
 
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""

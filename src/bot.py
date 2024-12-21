@@ -6,7 +6,7 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.bot_commands import commands
 
-from src.handlers import BotHandlers
+from src.handlers import BotHandlers, AccessLevel
 
 class Bot: 
     def __init__(self) -> None:
@@ -26,6 +26,7 @@ class Bot:
         keyboard = InlineKeyboardMarkup()
         button = InlineKeyboardButton("Start", callback_data='start')
         keyboard.add(button)
+        self.bot.add_custom_filter(AccessLevel())
 
     def startBot(self):
         """ set up hanlders, starts bot polling """
