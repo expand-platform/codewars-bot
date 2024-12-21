@@ -27,7 +27,7 @@ class Database:
         if user:
             print(f"Пользователь с юзернеймом {username} уже существует.")
         else:
-            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG"}
+            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG", "access_level": "user"}
             self.users_collection.insert_one(document)
             print(f"Создан пользователь с юзернеймом {username}.")
 
@@ -64,3 +64,18 @@ class Database:
     def save_challenge(self, new_challenge):
         self.challenges_collection.insert_one(new_challenge)
         print("challenge added to db!")
+        
+    def get_user_access(self, username: str):
+        tguser_filter = {"tg_username": username}
+        user = self.users_collection.find_one(tguser_filter)
+        
+        if user:
+            access_level = user.get("access_level")
+            print("Уровень доступа пользователя: ", access_level)
+            return access_level
+        else:
+            print(f"Пользователь с именем '{username}' не найден в базе данных.")
+            return f"Пользователь с именем '{username}' не найден в базе данных."
+            
+        
+

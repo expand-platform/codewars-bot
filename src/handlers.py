@@ -2,7 +2,7 @@ from requests import get
 from dotenv import load_dotenv
 import os 
 
-from telebot import types, TeleBot
+from telebot import types, TeleBot, custom_filters
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
 
@@ -22,6 +22,18 @@ import random
 
 # с кнопками есть баги, клава иногда не появляется, по фикшу на уроке
 
+class AccessLevel(custom_filters.SimpleCustomFilter):
+    key='access_level'
+    @staticmethod
+    def check(message):
+        username = message.from_user.username
+        access_level = Database().get_user_access(username)
+        return access_level
+        # if access_level == "admin":
+        #     return "admin"
+        # else:
+        #     return False
+        
 class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
@@ -46,6 +58,7 @@ class BotHandlers():
     
     def start_handlers(self):
         self.start_command()
+        self.admin_start()
         self.handle_random_text() 
         
     def create_keyboard(self):
@@ -370,7 +383,13 @@ class BotHandlers():
                 text=bot_message, 
                 parse_mode=self.parse_mode
             )
-
+    def admin_test(self, message):
+        self.bot.reply_to(message, "Only admin can see this message!")
+        
+    def admin_start(self):
+        @self.bot.message_handler(commands=["admin"], access_level="admin") 
+        def admin(message):
+            self.admin_test(message)
 
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
