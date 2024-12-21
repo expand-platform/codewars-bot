@@ -24,17 +24,17 @@ import random
 
 # с кнопками есть баги, клава иногда не появляется, по фикшу на уроке
 
-class AccessLevel(custom_filters.SimpleCustomFilter):
+class AccessLevel(custom_filters.AdvancedCustomFilter): 
     key='access_level'
     @staticmethod
-    def check(message):
+    def check(message, levels):
         username = message.from_user.username
         access_level = Database().get_user_access(username)
-        return access_level
-        # if access_level == "admin":
-        #     return "admin"
-        # else:
-        #     return False
+        return access_level in levels
+        # username = message.from_user.username
+        # access_level = Database().get_user_access(username)
+        # return access_level
+
         
 class BotHandlers():
     def __init__(self, bot):
@@ -419,7 +419,7 @@ class BotHandlers():
         self.bot.reply_to(message, "Only admin can see this message!")
         
     def admin_start(self):
-        @self.bot.message_handler(commands=["admin"], access_level="admin") 
+        @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
         def admin(message):
             self.admin_test(message)
 
