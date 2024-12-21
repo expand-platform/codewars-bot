@@ -226,8 +226,14 @@ class BotHandlers():
 
         time.sleep(4)
         
-        for message in messages:
-            self.bot.send_message(chat_id, message, parse_mode=self.parse_mode)
+        for i in messages:        
+            check = self.helpers.tg_api_try_except(i, username)
+            if check == "OK":
+                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+            elif check == "TOO_LONG":
+                text = self.lang("message_is_too_long", username)
+                print(text)
+                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
         
 
 # ! иногда есть ошибка Bad requsest, message is too long
@@ -279,8 +285,14 @@ class BotHandlers():
 
                 print("kata name:", challenge["Challenge name"])
 
-                for message in messages:
-                    self.bot.send_message(chat_id, message, parse_mode=self.parse_mode)
+                for i in messages:        
+                    check = self.helpers.tg_api_try_except(i, username)
+                    if check == "OK":
+                        self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                    elif check == "TOO_LONG":
+                        text = self.lang("message_is_too_long", username)
+                        print(text)
+                        self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
                     
                 # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
@@ -324,7 +336,15 @@ class BotHandlers():
                 self.database.challenges_collection.insert_one(challenge)
             
             for i in messages:        
-                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                check = self.helpers.tg_api_try_except(i, username)
+                if check == "OK":
+                    self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                elif check == "TOO_LONG":
+                    text = self.lang("message_is_too_long", username)
+                    print(text)
+                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+            # TODO: проверять длину только у описания
+                
                 
                 
                 
