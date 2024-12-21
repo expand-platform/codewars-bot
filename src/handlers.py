@@ -139,13 +139,14 @@ class BotHandlers():
             
     def authorization(self, message):
         username = message.from_user.username
+        img_path = "src/images/nickname_example.png"
+        normalised_img_path = os.path.normpath(img_path)
         self.command_use_log("/authorize", username, message.chat.id)
         
         markup =  InlineKeyboardMarkup()
         cw_signin_page_button = InlineKeyboardButton(self.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
         markup.add(cw_signin_page_button)
         
-
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
@@ -153,6 +154,8 @@ class BotHandlers():
             reply_markup=markup
         )
         
+            
+        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
         
     def authorization_ans(self, message):
