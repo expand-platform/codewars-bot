@@ -21,10 +21,16 @@ class Codewars_Challenges:
         user = self.getuser_function(codewars_username, telegram_username)
         print("USER: ", user)
         
+        if user["skills"] == []:
+            skills = "No skills"
+        
+        else:
+            skills = user["skills"]
+        
         user_info = {
             "Codewars name": user["username"],
             "Telegram name": telegram_username,
-            "Ranks": user["ranks"],
+            "Rank": user["ranks"]["overall"]["name"],
             "Honor": user["honor"],
             "Clan": user["clan"],
             "Leaderboard": user["leaderboardPosition"],
@@ -32,7 +38,7 @@ class Codewars_Challenges:
             "Code challenges": user["codeChallenges"]
         }
         
-        string_form = f"Codewars name: {user["username"]}\n\nTelegram name: {telegram_username}\n\nRanks: {user["ranks"]}\n\nHonor: {user["honor"]}\n\nClan: {user["clan"]}\n\nLeaderboard: {user["leaderboardPosition"]}\n\nSkills: {user["skills"]}\n\nCode challenges: {user["codeChallenges"]}"
+        string_form = f"Codewars name: {user["username"]}\n\nTelegram name: {telegram_username}\n\nRank: {user["ranks"]["overall"]["name"]}\n\nHonor: {user["honor"]}\n\nClan: {user["clan"]}\n\nLeaderboard: {user["leaderboardPosition"]}\n\nSkills: {skills}\n\nCode challenges: {user["codeChallenges"]["totalCompleted"]}\n\nScore: {user["ranks"]["overall"]["score"]}"
         return string_form
 
     """функция для поиска задачи по уровню и языку"""

@@ -55,9 +55,9 @@ class BotHandlers():
         # * КОГДА ДОБАВЛЯЕТЕ НОВУЮ КОММАНДУ В KEYBOARDBUTTON СТАРАЙТЕСЬ РАВНОМЕРНО ДЕЛАТЬ (ОДНА СТРОЧКА С MARKUP.ADD ЭТО ОДНА ГОРИЗОНТАЛЬНАЯ ГРУПА)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
         
-        markup.add(self.keyboard_buttons["start"], self.keyboard_buttons["authorize"], self.keyboard_buttons["check_stats"])
-        markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"])
-        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
+        markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["check_stats"])
+        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"])
+        markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
     
@@ -205,16 +205,34 @@ class BotHandlers():
         self.database.update_codewars_nickname(tg_username, cw_nickname)
         
         try:
-            user_stats = self.codewars_api.check_user_stats(cw_nickname, tg_username)
+            user_stats = self.codewars_api.check_user_stats(cw_nickname, tg_username)    
             self.bot.reply_to(message, user_stats)
         except:
             bot_message = self.lang("check_stats_error", tg_username)
             self.bot.reply_to(message, bot_message)
 
     def random_level_and_task(self, message):
-        self.bot.send_dice(message.chat.id, emoji="🎲")
+        
         username = message.from_user.username
         chat_id = message.chat.id
+        # достать кв никнейм по тг юзеру
+        tguser_filter = {"tg_username": username}
+        user = self.database.users_collection.find_one(tguser_filter)
+        codewars_name = user["cw_nickname"]
+
+        # статы юзера
+        # stats = self.codewars_api.getuser_function(codewars_name, username)
+        # print("STATI USERA VOT: ", stats)
+        
+        # ! через дату баз сделай так что бы от точки а(старт юзера) до точки б (щас) задачки разблакло
+        
+        
+        
+        
+        
+        # остальной код
+        
+        self.bot.send_dice(message.chat.id, emoji="🎲")
         self.command_use_log("/random_level_and_task", username, message.chat.id)
         
         challenges = list(self.database.challenges_collection.find({}))

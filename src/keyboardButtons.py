@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 keyboard_buttons = {
-    "start": types.KeyboardButton("Start ✅"),
+    # "start": types.KeyboardButton("Start ✅"),
     "authorize": types.KeyboardButton("Authorize ⚙"),
     "check_stats": types.KeyboardButton("Check stats 🏅"),
     "random_task": types.KeyboardButton("Random task 🥋"),
