@@ -13,28 +13,9 @@ class Helpers():
         lowercase_result = result.lower()
         return lowercase_result
 
-    def split_message(self, text: str, max_length=4095):
-
-        # chunks = [text[i:i + max_length] for i in range(0, len(text), max_length)]
-
-        # for i, chunk in enumerate(chunks, start=1):
-        #     print(f"Часть {i}: {len(chunk)} символов")
-
-        # return chunks
-
-
-
-        parts = []
-        new_text = text
-        if len(text) > max_length:
-            split_index = text[:max_length].rfind('\n') 
-            if split_index == -1:
-                split_index = max_length
-            parts.append(text[:split_index])
-            new_text = text[split_index:].lstrip()
-        parts.append(new_text)  
-        print(parts)
-        return parts
-        # ! плохо сделано, потом перепишу, пока не трогать
-        # попробовать метод split()
-        # всё не работать и я ничего не понимать
+    def tg_api_try_except(self, text: str, username: str, max_length=4095):
+        print (len(text))
+        if len(text) <= max_length: 
+            return "OK"
+        elif len(text) > max_length:
+            return "TOO_LONG"

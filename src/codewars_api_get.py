@@ -72,12 +72,8 @@ class Codewars_Challenges:
                 "Rank": challenge["rank"],
                 "Codewars link": url
             }
-            print("Slug:", challenge_info["Slug"], "\n" "Challenge name:", challenge_info["Challenge name"], "\n", "Description:", challenge_info["Description"], "\n", "Rank:", list(challenge_info["Rank"].values())[1], "\n", "Codewars link:", challenge_info["Codewars link"])
             return challenge_info
         else:
             print(f"Ошибка: {response.status_code}")
             return response.status_code
 
-if __name__ == "__main__":
-    cw = Codewars_Challenges()
-    cw.get_challenge_info_by_slug("vowel-count")

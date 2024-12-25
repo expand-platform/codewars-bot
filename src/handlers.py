@@ -2,7 +2,7 @@ from requests import get
 from dotenv import load_dotenv
 import os 
 
-from telebot import types, TeleBot
+from telebot import types, TeleBot, custom_filters
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
 
@@ -24,6 +24,18 @@ import random
 
 # с кнопками есть баги, клава иногда не появляется, по фикшу на уроке
 
+class AccessLevel(custom_filters.AdvancedCustomFilter): 
+    key='access_level'
+    @staticmethod
+    def check(message, levels):
+        username = message.from_user.username
+        access_level = Database().get_user_access(username)
+        return access_level in levels
+        # username = message.from_user.username
+        # access_level = Database().get_user_access(username)
+        # return access_level
+
+        
 class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
@@ -49,6 +61,7 @@ class BotHandlers():
     
     def start_handlers(self):
         self.start_command()
+        self.admin_start()
         self.handle_random_text() 
         
     def create_keyboard(self):
@@ -247,8 +260,14 @@ class BotHandlers():
 
         time.sleep(4)
         
-        for message in messages:
-            self.bot.send_message(chat_id, message, parse_mode=self.parse_mode)
+        for i in messages:        
+            check = self.helpers.tg_api_try_except(i, username)
+            if check == "OK":
+                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+            elif check == "TOO_LONG":
+                text = self.lang("message_is_too_long", username)
+                print(text)
+                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
         
 
 # ! иногда есть ошибка Bad requsest, message is too long
@@ -300,8 +319,14 @@ class BotHandlers():
 
                 print("kata name:", challenge["Challenge name"])
 
-                for message in messages:
-                    self.bot.send_message(chat_id, message, parse_mode=self.parse_mode)
+                for i in messages:        
+                    check = self.helpers.tg_api_try_except(i, username)
+                    if check == "OK":
+                        self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                    elif check == "TOO_LONG":
+                        text = self.lang("message_is_too_long", username)
+                        print(text)
+                        self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
                     
                 # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
@@ -345,7 +370,15 @@ class BotHandlers():
                 self.database.challenges_collection.insert_one(challenge)
             
             for i in messages:        
-                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                check = self.helpers.tg_api_try_except(i, username)
+                if check == "OK":
+                    self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                elif check == "TOO_LONG":
+                    text = self.lang("message_is_too_long", username)
+                    print(text)
+                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+            # TODO: проверять длину только у описания
+                
                 
                 
                 
@@ -420,7 +453,13 @@ class BotHandlers():
                 text=bot_message, 
                 parse_mode=self.parse_mode
             )
-
+    def admin_test(self, message):
+        self.bot.reply_to(message, "Only admin can see this message!")
+        
+    def admin_start(self):
+        @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
+        def admin(message):
+            self.admin_test(message)
 
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
