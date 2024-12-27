@@ -345,45 +345,43 @@ class BotHandlers():
         self.command_use_log("/find_task", username, message.chat.id) 
         self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
 
+    def challenge_print(self, challenge_source, username, chat_id):
+        messages = [
+            self.lang("task_name", username).format(challenge_source["Challenge name"]),
+            self.lang("task_description", username).format(challenge_source['Description']),
+            self.lang("task_rank", username).format(challenge_source['Rank']['name']),
+            self.lang("task_url", username).format(challenge_source['Codewars link']),
+        ]
+        for i in messages:        
+            check = self.helpers.tg_api_try_except(i, username)
+            if check == "OK":
+                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+            elif check == "TOO_LONG":
+                text = self.lang("message_is_too_long", username)
+                print(text)
+                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+
     def find_task_response(self, message):
         username = message.from_user.username
         chat_id = message.chat.id
         result = self.helpers.transform_challenge_string(message)
-        challenge = self.codewars_api.get_challenge_info_by_slug(result)  
+        challenge_api = self.codewars_api.get_challenge_info_by_slug(result)  
 
-        if challenge == 404:
+        if challenge_api == 404:
             bot_message = self.lang("find_task_not_found", username)
             self.bot.reply_to(message, bot_message)
         else:
-            messages = [
-                    self.lang("task_name", username).format(challenge["Challenge name"]),
-                    self.lang("task_description", username).format(challenge['Description']),
-                    self.lang("task_rank", username).format(challenge['Rank']['name']),
-                    self.lang("task_url", username).format(challenge['Codewars link']),
-                ]
-
             filter = {"Slug": result}
-            challenge_check = self.database.challenges_collection.find_one(filter)
-            if challenge_check:
-                print("Такая задача уже есть в базе данных, поэтому она не была добавлена в базу.")
+            challenge_database = self.database.challenges_collection.find_one(filter)
+            if challenge_database:
+                self.challenge_print(challenge_database, username, chat_id)
             else:
-                self.database.challenges_collection.insert_one(challenge)
+                self.database.challenges_collection.insert_one(challenge_api)
             
-            for i in messages:        
-                check = self.helpers.tg_api_try_except(i, username)
-                if check == "OK":
-                    self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
-                elif check == "TOO_LONG":
-                    text = self.lang("message_is_too_long", username)
-                    print(text)
-                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+                self.challenge_print(challenge_api, username, chat_id)
             # TODO: проверять длину только у описания
                 
-                
-                
-                
 
-           
     def load_challenges_command(self, message):
         """ load tasks from another user, saves them to db """  
         username = message.from_user.username
@@ -408,36 +406,43 @@ class BotHandlers():
         try:
             response = get(url=user_challenges_URL)
             data_from_api = response.json()
-            # try:
+            total_pages = data_from_api["totalPages"] 
             challenges_count = data_from_api["totalItems"] 
-            # except:
-            #     self.bot.send_message(message.chat.id, )
+
             bot_message = self.lang("load_challenges_count", username)   
             bot_reply_text = bot_message.format(challenges_count,cw_username)
-            print(bot_reply_text)
             
             self.bot.send_message(
                 chat_id=message.chat.id, 
                 text=bot_reply_text, 
                 parse_mode=self.parse_mode
             )
+            print("total pages:", total_pages)
+            for i in range(total_pages):
+                print(f'cycle number: {i}')
+                
+                user_challenges_URL_specific_page = f"https://www.codewars.com/api/v1/users/{cw_username}/code-challenges/completed?page={i}" 
+                response = get(url=user_challenges_URL_specific_page)
+                data_from_api = response.json()
+           
+                user_challenges = data_from_api["data"]
             
-            user_challenges = data_from_api["data"]
-            
-            for challenge in user_challenges:
-                challenge_slug = challenge["slug"]
-                print("🐍 challenge_slug (load_challenges_final_step) ",challenge_slug)
-                
-                this_challenge_exists = self.database.is_challenge_in_db(challenge_slug=challenge_slug)
-                print("🐍 this_challenge_exists (load_challenges_final_step) ",this_challenge_exists)
-                
-                if not this_challenge_exists:
-                    challenge_info = self.codewars_api.get_challenge_info_by_slug(slug=challenge_slug)
-                    print("🐍challenge info (load_challenges_final_step)", challenge_info)
-                
-                    if challenge:
-                        self.database.save_challenge(new_challenge=challenge_info)
+                for challenge in user_challenges:
+                    challenge_slug = challenge["slug"]
+                    
+                    this_challenge_exists = self.database.is_challenge_in_db(challenge_slug=challenge_slug)
+                    # if this_challenge_exists:
+                    #     print(f"🐍 challenge {challenge_slug} already exists ❌")
+                    # else: 
+                    #     print(f"🐍 challenge {challenge_slug} added to the database ✅")
                         
+                    
+                    if not this_challenge_exists:
+                        challenge_info = self.codewars_api.get_challenge_info_by_slug(slug=challenge_slug)
+                    
+                        if challenge:
+                            self.database.save_challenge(new_challenge=challenge_info)
+                            
             bot_message = self.lang("load_challenges_final", username)   
             bot_final_message_text = bot_message.format(challenges_count) 
                     

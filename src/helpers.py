@@ -14,7 +14,6 @@ class Helpers():
         return lowercase_result
 
     def tg_api_try_except(self, text: str, username: str, max_length=4095):
-        print (len(text))
         if len(text) <= max_length: 
             return "OK"
         elif len(text) > max_length:

@@ -76,4 +76,3 @@ class Codewars_Challenges:
         else:
             print(f"Ошибка: {response.status_code}")
             return response.status_code
-
