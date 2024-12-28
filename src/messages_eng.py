@@ -28,6 +28,7 @@ MESSAGES_ENG = {
     "authorization_error": "Error occurred during authorization 😣 Please press authorize button again ⚙",
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
-    "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... (rank {} is needed)",
+    "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... (5 tasks need to be completed)",
+    
     
 }

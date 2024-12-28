@@ -172,6 +172,9 @@ class BotHandlers():
         
     def authorization_ans(self, message):
         username = message.from_user.username
+        
+        filter = {"tg_username": username}
+        user = self.database.users_collection.find_one(filter) 
         user_info = self.codewars_api.getuser_function(message.text, username)
         
         if "reason" in user_info:
@@ -189,6 +192,17 @@ class BotHandlers():
             
             self.database.update_codewars_nickname(username, cw_username)
             self.bot.send_message(message.chat.id, message_text)
+            
+            if user["totalDone_snum"] == None:
+                self.record_first_info(message.text, username, filter)
+        
+    def record_first_info(self, cw_username, username, filter):
+        user = self.codewars_api.getuser_function(cw_username, username) 
+        update = {"$set": {"totalDone_snum": user["codeChallenges"]["totalCompleted"]}}
+        
+        self.database.users_collection.update_one(filter, update, upsert=False)
+        
+        
         
     def check_stats_command(self, message): 
             username = message.from_user.username
@@ -228,46 +242,49 @@ class BotHandlers():
         
         username = message.from_user.username
         chat_id = message.chat.id
+        
         # достать кв никнейм по тг юзеру
         tguser_filter = {"tg_username": username}
-        user = self.database.users_collection.find_one(tguser_filter)
+        user = self.database.users_collection.find_one(tguser_filter)        
         codewars_name = user["cw_nickname"]
 
         # статы юзера
-        # stats = self.codewars_api.getuser_function(codewars_name, username)
-        # print("STATI USERA VOT: ", stats)
+        stats = self.codewars_api.getuser_function(codewars_name, username)
+        task_difference = stats["codeChallenges"]["totalCompleted"] - user["totalDone_snum"]
+
         
         # ! через дату баз сделай так что бы от точки а(старт юзера) до точки б (щас) задачки разблакло
         
         
-        
-        
-        
-        # остальной код
-        
-        self.bot.send_dice(message.chat.id, emoji="🎲")
-        self.command_use_log("/random_level_and_task", username, message.chat.id)
-        
-        challenges = list(self.database.challenges_collection.find({}))
-        random_task = random.choice(challenges)
-        
-        messages = [
-        self.lang("task_name", username).format(random_task["Challenge name"]),
-        self.lang("task_description", username).format(random_task['Description']),
-        self.lang("task_rank", username).format(random_task['Rank']['name']),
-        self.lang("task_url", username).format(random_task['Codewars link']),
-        ]
+        if task_difference < 3:
+            self.bot.send_message(message.chat.id, self.lang("no_lvl_access", username))
+            
+        else:
+            # остальной код
+            
+            self.bot.send_dice(message.chat.id, emoji="🎲")
+            self.command_use_log("/random_level_and_task", username, message.chat.id)
+            
+            challenges = list(self.database.challenges_collection.find({}))
+            random_task = random.choice(challenges)
+            
+            messages = [
+            self.lang("task_name", username).format(random_task["Challenge name"]),
+            self.lang("task_description", username).format(random_task['Description']),
+            self.lang("task_rank", username).format(random_task['Rank']['name']),
+            self.lang("task_url", username).format(random_task['Codewars link']),
+            ]
 
-        time.sleep(4)
-        
-        for i in messages:        
-            check = self.helpers.tg_api_try_except(i, username)
-            if check == "OK":
-                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
-            elif check == "TOO_LONG":
-                text = self.lang("message_is_too_long", username)
-                print(text)
-                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+            time.sleep(4)
+            
+            for i in messages:        
+                check = self.helpers.tg_api_try_except(i, username)
+                if check == "OK":
+                    self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                elif check == "TOO_LONG":
+                    text = self.lang("message_is_too_long", username)
+                    print(text)
+                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
         
 
 # ! иногда есть ошибка Bad requsest, message is too long

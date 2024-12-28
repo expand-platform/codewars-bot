@@ -19,7 +19,6 @@ class Codewars_Challenges:
 
     def check_user_stats(self, codewars_username: str, telegram_username: str):
         user = self.getuser_function(codewars_username, telegram_username)
-        print("USER: ", user)
         
         if user["skills"] == []:
             skills = "No skills"
