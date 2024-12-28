@@ -268,26 +268,9 @@ class BotHandlers():
             challenges = list(self.database.challenges_collection.find({}))
             random_task = random.choice(challenges)
             
-            messages = [
-            self.lang("task_name", username).format(random_task["Challenge name"]),
-            self.lang("task_description", username).format(random_task['Description']),
-            self.lang("task_rank", username).format(random_task['Rank']['name']),
-            self.lang("task_url", username).format(random_task['Codewars link']),
-            ]
-
-            time.sleep(4)
-            
-            for i in messages:        
-                check = self.helpers.tg_api_try_except(i, username)
-                if check == "OK":
-                    self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
-                elif check == "TOO_LONG":
-                    text = self.lang("message_is_too_long", username)
-                    print(text)
-                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+            self.challenge_print(random_task, username, chat_id, True)
         
 
-# ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
         username = message.from_user.username
@@ -327,23 +310,8 @@ class BotHandlers():
             if result:
                 challenge = result[0]
 
-                messages = [
-                    self.lang("task_name", username).format(challenge["Challenge name"]),
-                    self.lang("task_description", username).format(challenge['Description']),
-                    self.lang("task_rank", username).format(challenge['Rank']['name']),
-                    self.lang("task_url", username).format(challenge['Codewars link']),
-                ]
-
                 print("kata name:", challenge["Challenge name"])
-
-                for i in messages:        
-                    check = self.helpers.tg_api_try_except(i, username)
-                    if check == "OK":
-                        self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
-                    elif check == "TOO_LONG":
-                        text = self.lang("message_is_too_long", username)
-                        print(text)
-                        self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+                self.challenge_print(challenge, username, chat_id, False)
                     
                 # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
@@ -362,21 +330,29 @@ class BotHandlers():
         self.command_use_log("/find_task", username, message.chat.id) 
         self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
 
-    def challenge_print(self, challenge_source, username, chat_id):
+    def challenge_print(self, challenge_source, username, chat_id, sleep):
         messages = [
             self.lang("task_name", username).format(challenge_source["Challenge name"]),
             self.lang("task_description", username).format(challenge_source['Description']),
             self.lang("task_rank", username).format(challenge_source['Rank']['name']),
             self.lang("task_url", username).format(challenge_source['Codewars link']),
         ]
+
+        if sleep == True:
+            time.sleep(4)
+
         for i in messages:        
             check = self.helpers.tg_api_try_except(i, username)
+
             if check == "OK":
-                self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                try:
+                    self.bot.send_message(chat_id, i, self.parse_mode)
+                except:
+                    self.bot.send_message(chat_id, i)
             elif check == "TOO_LONG":
                 text = self.lang("message_is_too_long", username)
-                print(text)
                 self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+        
 
     def find_task_response(self, message):
         username = message.from_user.username
@@ -391,11 +367,11 @@ class BotHandlers():
             filter = {"Slug": result}
             challenge_database = self.database.challenges_collection.find_one(filter)
             if challenge_database:
-                self.challenge_print(challenge_database, username, chat_id)
+                self.challenge_print(challenge_database, username, chat_id, False)
             else:
                 self.database.challenges_collection.insert_one(challenge_api)
             
-                self.challenge_print(challenge_api, username, chat_id)
+                self.challenge_print(challenge_api, username, chat_id, False)
             # TODO: проверять длину только у описания
                 
 
