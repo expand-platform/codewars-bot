@@ -12,6 +12,7 @@ fastapi = "*"
 uvicorn = "*"
 watchdog = "*"
 psutil = "*"
+html2text = "*"
 
 [dev-packages]
 
