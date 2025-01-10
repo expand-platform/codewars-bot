@@ -1,6 +1,7 @@
 from requests import get
 from dotenv import load_dotenv
 import os 
+import html2text
 
 from telebot import types, TeleBot, custom_filters
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -343,11 +344,16 @@ class BotHandlers():
             time.sleep(4)
 
         for i in messages:        
-            check = self.helpers.tg_api_try_except(i, username)
+            check = self.helpers.tg_api_try_except(i, username) 
 
             if check == "OK":
                 try:
-                    self.bot.send_message(chat_id, i, self.parse_mode)
+                    # конвертация html в markdown
+                    converter = html2text.HTML2Text()
+                    converter.ignore_links = False
+                    task_in_markdown = converter.handle(i)
+
+                    self.bot.send_message(chat_id, task_in_markdown, self.parse_mode) 
                 except:
                     self.bot.send_message(chat_id, i)
             elif check == "TOO_LONG":
@@ -368,6 +374,7 @@ class BotHandlers():
             filter = {"Slug": result}
             challenge_database = self.database.challenges_collection.find_one(filter)
             if challenge_database:
+
                 self.challenge_print(challenge_database, username, chat_id, False)
             else:
                 self.database.challenges_collection.insert_one(challenge_api)
