@@ -62,6 +62,7 @@ class BotHandlers():
     def start_handlers(self):
         self.start_command()
         self.admin_start()
+        self.load_tasks_command()
         self.handle_random_text() 
         
     def create_keyboard(self):
@@ -69,7 +70,7 @@ class BotHandlers():
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
         
         markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["check_stats"])
-        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"], self.keyboard_buttons["load_task"])
+        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"])
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
@@ -375,6 +376,7 @@ class BotHandlers():
             # TODO: проверять длину только у описания
                 
 
+
     def load_challenges_command(self, message):
         """ load tasks from another user, saves them to db """  
         username = message.from_user.username
@@ -386,7 +388,11 @@ class BotHandlers():
         )
         self.command_use_log("/load_tasks", username, message.chat.id)
         self.bot.register_next_step_handler(message=bot_message, callback=self.load_challenges_final_step)
-                
+            
+    def load_tasks_command(self):
+        @self.bot.message_handler(commands=["load_tasks"], access_level=["admin"], func=lambda message: True) 
+        def echo(message):
+            self.load_challenges_command(message)
                 
     def load_challenges_final_step(self, message: Message):
         username = message.from_user.username
@@ -452,7 +458,7 @@ class BotHandlers():
                 parse_mode=self.parse_mode
             )
     def admin_test(self, message):
-        self.bot.reply_to(message, "Only admin can see this message!")
+        self.bot.reply_to(message, "Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks")
         
     def admin_start(self):
         @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
@@ -474,9 +480,6 @@ class BotHandlers():
             
             elif message.text == "Find task 🔍":
                 self.find_task_command(message)
-            
-            elif message.text == "Load task 🔃":
-                self.load_challenges_command(message)
                 
             elif message.text == "Random task and lvl 🎲":
                 self.random_level_and_task(message)
