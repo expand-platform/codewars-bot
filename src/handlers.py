@@ -194,6 +194,9 @@ class BotHandlers():
             self.database.update_codewars_nickname(username, cw_username)
             self.bot.send_message(message.chat.id, message_text)
             
+            time.sleep(1)
+            self.lang_change(message)
+            
             if user["totalDone_snum"] == None:
                 self.record_first_info(message.text, username, filter)
         
@@ -203,9 +206,6 @@ class BotHandlers():
         
         self.database.users_collection.update_one(filter, update, upsert=False)
         
-        
-            time.sleep(1)
-            self.lang_change(message)
         
     def check_stats_command(self, message): 
             username = message.from_user.username
