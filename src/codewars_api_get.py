@@ -19,12 +19,17 @@ class Codewars_Challenges:
 
     def check_user_stats(self, codewars_username: str, telegram_username: str):
         user = self.getuser_function(codewars_username, telegram_username)
-        print("USER: ", user)
+        
+        if user["skills"] == []:
+            skills = "No skills"
+        
+        else:
+            skills = user["skills"]
         
         user_info = {
             "Codewars name": user["username"],
             "Telegram name": telegram_username,
-            "Ranks": user["ranks"],
+            "Rank": user["ranks"]["overall"]["name"],
             "Honor": user["honor"],
             "Clan": user["clan"],
             "Leaderboard": user["leaderboardPosition"],
@@ -32,7 +37,7 @@ class Codewars_Challenges:
             "Code challenges": user["codeChallenges"]
         }
         
-        string_form = f"Codewars name: {user["username"]}\n\nTelegram name: {telegram_username}\n\nRanks: {user["ranks"]}\n\nHonor: {user["honor"]}\n\nClan: {user["clan"]}\n\nLeaderboard: {user["leaderboardPosition"]}\n\nSkills: {user["skills"]}\n\nCode challenges: {user["codeChallenges"]}"
+        string_form = f"Codewars name: {user["username"]}\n\nTelegram name: {telegram_username}\n\nRank: {user["ranks"]["overall"]["name"]}\n\nHonor: {user["honor"]}\n\nClan: {user["clan"]}\n\nLeaderboard: {user["leaderboardPosition"]}\n\nSkills: {skills}\n\nCode challenges: {user["codeChallenges"]["totalCompleted"]}\n\nScore: {user["ranks"]["overall"]["score"]}"
         return string_form
 
     """функция для поиска задачи по уровню и языку"""
@@ -66,12 +71,7 @@ class Codewars_Challenges:
                 "Rank": challenge["rank"],
                 "Codewars link": url
             }
-            print("Slug:", challenge_info["Slug"], "\n" "Challenge name:", challenge_info["Challenge name"], "\n", "Description:", challenge_info["Description"], "\n", "Rank:", list(challenge_info["Rank"].values())[1], "\n", "Codewars link:", challenge_info["Codewars link"])
             return challenge_info
         else:
             print(f"Ошибка: {response.status_code}")
             return response.status_code
-
-if __name__ == "__main__":
-    cw = Codewars_Challenges()
-    cw.get_challenge_info_by_slug("vowel-count")

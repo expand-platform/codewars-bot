@@ -22,12 +22,13 @@ class Database:
         """Функция создаёт нового юзера, сюда кидаем юзернейм и его уровень (скорее всего уровень будет 0, так как пользователь новый)
         cw = code wars
         """
+        
         tguser_filter = {"tg_username": username}
         user = self.users_collection.find_one(tguser_filter)
         if user:
             print(f"Пользователь с юзернеймом {username} уже существует.")
         else:
-            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG", "access_level": "user"}
+            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG", "access_level": "user", "totalDone_snum": None}
             self.users_collection.insert_one(document)
             print(f"Создан пользователь с юзернеймом {username}.")
 
@@ -75,6 +76,3 @@ class Database:
         else:
             print(f"Пользователь с именем '{username}' не найден в базе данных.")
             return f"Пользователь с именем '{username}' не найден в базе данных."
-            
-        
-

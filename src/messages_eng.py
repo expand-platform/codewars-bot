@@ -10,7 +10,8 @@ MESSAGES_ENG = {
     'task_name': "Challenge name:  {}",
     'task_description': "Description:  {}",
     'task_rank': "Rank:  {}",
-    'task_url': "Codewars link:  {}",
+    'task_url': "Codewars link:  {}", 
+    "message_is_too_long": "Sorry, description is too long, and telegram restrictions won't let us send it. Go to codewars to see the full description.",
     "random_task_not_found": "No challenge found for the specified level.",
     "find_task_ask_name": "What task do you want to find? Type its name and we will find it for you. (example: Vowel Count)",
     "find_task_not_found": "No such challenge in codewars.\n\nPlease double-check the name of the task, and try again.",
@@ -27,4 +28,7 @@ MESSAGES_ENG = {
     "authorization_error": "Error occurred during authorization 😣 Please press authorize button again ⚙",
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
+    "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... (5 tasks need to be completed)",
+    
+    
 }
