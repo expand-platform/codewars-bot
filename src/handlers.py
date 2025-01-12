@@ -238,6 +238,28 @@ class BotHandlers():
             bot_message = self.lang("check_stats_error", tg_username)
             self.bot.reply_to(message, bot_message)
 
+    
+    
+    # def send_sticker_list(self, message):
+    #     sticker_pack_name = "Astolfobydanveliar_by_fStikBot"  # Replace with the sticker pack name
+    #     sticker_set = self.bot.get_sticker_set(name=sticker_pack_name)
+    #     stickers_id = []
+    #     for sticker in sticker_set.stickers:
+    #         stickers_id.append(sticker.file_id)
+    #         print("STICKER: ", stickers_id)
+    #         print("STICKER: ", sticker)
+        
+    #     # print("STICKERS: ", stickers)  #! теперь бот отправляет Астольфо)))
+    #     self.bot.send_sticker(message.chat.id, )
+    
+
+    
+     
+
+
+
+
+
     def random_level_and_task(self, message):
         
         username = message.from_user.username
@@ -251,13 +273,11 @@ class BotHandlers():
         # статы юзера
         stats = self.codewars_api.getuser_function(codewars_name, username)
         task_difference = stats["codeChallenges"]["totalCompleted"] - user["totalDone_snum"]
-
-        
-        # ! через дату баз сделай так что бы от точки а(старт юзера) до точки б (щас) задачки разблакло
-        
-        
+         
         if task_difference < 3:
-            self.bot.send_message(message.chat.id, self.lang("no_lvl_access", username))
+            needs_to_be_done = 3 - task_difference
+            
+            self.bot.send_message(message.chat.id, self.lang("no_lvl_access", username).format(needs_to_be_done)) 
             
         else:
             # остальной код
@@ -287,9 +307,19 @@ class BotHandlers():
                     self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
         
 
+    def get_ranks(self, message):
+        ranks = []
+        
+        for button in lvl_buttons:
+            print("BUTTON: ", button)
+            # ranks.append(button)
+
+
 # ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
+        # self.get_ranks(message)
+        
         username = message.from_user.username
         bot_message = self.lang("random_task_level_pick", username)
 
@@ -499,8 +529,8 @@ class BotHandlers():
             elif message.text == "Find task 🔍":
                 self.find_task_command(message)
             
-            elif message.text == "Load task 🔃":
-                self.load_challenges_command(message)
+            elif message.text == "Story mode 🏕":
+                self.send_sticker_list(message)
                 
             elif message.text == "Random task and lvl 🎲":
                 self.random_level_and_task(message)
