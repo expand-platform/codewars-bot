@@ -8,12 +8,16 @@ from src.bot_commands import commands
 
 from src.handlers import BotHandlers, AccessLevel
 
+class ExceptionHandler(telebot.ExceptionHandler):
+    def handle(self, exception):
+        print("Exception occured: ", exception)
+
 class Bot: 
     def __init__(self) -> None:
         load_dotenv()
         
         self.bot_token = os.getenv("TOKEN_FOR_TGBOT")
-        self.bot = telebot.TeleBot(self.bot_token)
+        self.bot = telebot.TeleBot(self.bot_token, exception_handler=ExceptionHandler())
         
         self.commands = commands
         
