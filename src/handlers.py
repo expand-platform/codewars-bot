@@ -32,9 +32,6 @@ class AccessLevel(custom_filters.AdvancedCustomFilter):
         username = message.from_user.username
         access_level = Database().get_user_access(username)
         return access_level in levels
-        # username = message.from_user.username
-        # access_level = Database().get_user_access(username)
-        # return access_level
 
         
 class BotHandlers():
@@ -89,8 +86,8 @@ class BotHandlers():
         username = message.from_user.username
         self.command_use_log("/language_change", username, message.chat.id)
         markup = quick_markup(values=lang_buttons, row_width=1)
-        bot_message = self.lang("change_language", username)
-        sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
+        ask_lang_message = self.lang("change_language", username)
+        sent_message = self.bot.send_message(message.chat.id, ask_lang_message, reply_markup=markup)
 
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def lang_change_callback(call: CallbackQuery):
@@ -107,7 +104,8 @@ class BotHandlers():
                 message_id=call.message.message_id,
                 reply_markup=None
             )
-
+            
+            self.bot.delete_message(call.message.chat.id, sent_message.message_id)
             # Отправляем сообщение о смене языка
             self.bot.send_message(call.message.chat.id, bot_message)
             
@@ -170,7 +168,7 @@ class BotHandlers():
         
             
         self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
-        self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
+        self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message):
         username = message.from_user.username
@@ -192,8 +190,12 @@ class BotHandlers():
             
             message_text = bot_reply.format(cw_username, honor_lvl, tasks_done)
             
+        
             self.database.update_codewars_nickname(username, cw_username)
             self.bot.send_message(message.chat.id, message_text)
+            
+            time.sleep(1)
+            self.lang_change(message)
             
             if user["totalDone_snum"] == None:
                 self.record_first_info(message.text, username, filter)
@@ -203,7 +205,6 @@ class BotHandlers():
         update = {"$set": {"totalDone_snum": user["codeChallenges"]["totalCompleted"]}}
         
         self.database.users_collection.update_one(filter, update, upsert=False)
-        
         
         
     def check_stats_command(self, message): 
