@@ -71,7 +71,7 @@ class BotHandlers():
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
         
         markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["check_stats"])
-        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"])
+        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"], self.keyboard_buttons["story_mode"])
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
@@ -254,6 +254,25 @@ class BotHandlers():
     #     # print("STICKERS: ", stickers)  #! теперь бот отправляет Астольфо)))
     #     self.bot.send_sticker(message.chat.id, )
     
+    def story_mode(self, message):
+        username = message.from_user.username
+        
+        filter = {"tg_username": username}
+        user = self.database.users_collection.find_one(filter) 
+        
+        if user["story_mode"] == False:
+            update = {"$set": {"story_mode": True}}
+            
+        else: 
+            update = {"$set": {"story_mode": False}}
+            
+        self.database.users_collection.update_one(filter, update, upsert=False)
+        user = self.database.users_collection.find_one(filter)
+        
+        return user["story_mode"]
+        
+        
+        
 
     
      
@@ -538,8 +557,8 @@ class BotHandlers():
             elif message.text == "Find task 🔍":
                 self.find_task_command(message)
             
-            elif message.text == "Load task 🔃":
-                self.load_challenges_command(message)
+            elif message.text == "Story mode 🏕":
+                self.story_mode(message)
                 
             elif message.text == "Random task and lvl 🎲":
                 self.random_level_and_task(message)
