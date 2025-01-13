@@ -109,6 +109,9 @@ class BotHandlers():
             # Отправляем сообщение о смене языка
             self.bot.send_message(call.message.chat.id, bot_message)
             
+            user = self.database.users_collection.find_one({"tg_username": username})
+            if user['cw_nickname'] == "None":
+                self.authorization(message)
 
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
@@ -135,9 +138,10 @@ class BotHandlers():
             bot_message = self.lang("start_bot", username)
             text = bot_message.format(username)
             
+            self.bot.send_message(message.chat.id, text, reply_markup=markup)
+            self.lang_change(message)
+            
             print("user chat id:", message.chat.id)
-            self.bot.send_message(message.chat.id, text, reply_markup=markup) 
-            self.authorization(message)
             
             self.command_use_log("/start", username, message.chat.id)
             #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
@@ -193,9 +197,6 @@ class BotHandlers():
         
             self.database.update_codewars_nickname(username, cw_username)
             self.bot.send_message(message.chat.id, message_text)
-            
-            time.sleep(1)
-            self.lang_change(message)
             
             if user["totalDone_snum"] == None:
                 self.record_first_info(message.text, username, filter)
