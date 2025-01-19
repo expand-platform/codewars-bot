@@ -29,6 +29,17 @@ MESSAGES_ENG = {
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
     "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... ({} tasks need to be completed)",
-    
+    "reminders": [
+        "Sharpen your coding skills today! 🧠💻 Log in to Codewars and conquer a kata!",
+        "Hey, coder! 🛠️ Your daily practice is calling. Ready to level up? 🚀",
+        "Consistency is key! 🔑 Tackle a Codewars challenge and keep the streak alive! 🌟",
+        "Small steps lead to big wins! 🏆 Solve a kata today and grow stronger in your craft.",
+        "Coding time! ⏳ Practice a kata on Codewars and crush your goals! 💪",
+        "Don’t let your skills rust! 🛡️ Jump into Codewars and polish them with a fresh kata!",
+        "Your brain needs a workout too! 🧠👾 Solve a kata and feed your inner problem-solver!",
+        "Reminder: Codewars awaits! 🚩 Complete one kata today and enjoy the progress!",
+        "Daily practice makes perfect! 🎯 Start solving a Codewars challenge now! ⚡",
+        "A quick Codewars kata a day keeps the bugs away! 🐛💻 Get started now!"
+    ],
     
 }

@@ -2,6 +2,8 @@ from requests import get
 from dotenv import load_dotenv
 import os 
 import html2text
+import schedule
+from threading import Thread
 
 from telebot import types, TeleBot, custom_filters
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -59,7 +61,6 @@ class BotHandlers():
     
     def start_handlers(self):
         self.start_command()
-        self.admin_start()
         self.load_tasks_command()
         self.handle_random_text() 
         
@@ -110,6 +111,7 @@ class BotHandlers():
             self.bot.send_message(call.message.chat.id, bot_message)
             
             user = self.database.users_collection.find_one({"tg_username": username})
+            
             if user['cw_nickname'] == "None":
                 self.authorization(message)
 
@@ -163,6 +165,8 @@ class BotHandlers():
         cw_signin_page_button = InlineKeyboardButton(self.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
         markup.add(cw_signin_page_button)
         
+        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
+        
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
@@ -170,8 +174,6 @@ class BotHandlers():
             reply_markup=markup
         )
         
-            
-        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message):
@@ -535,14 +537,16 @@ class BotHandlers():
                 text=bot_message, 
                 parse_mode=self.parse_mode
             )
-    def admin_test(self, message):
-        self.bot.reply_to(message, "Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks")
+    
+    def send_reminder(self, message):
+        username = message.from_user.username
+        reminders = self.lang("reminders", username)
+        reminder = random.choice(reminders)
+        self.bot.send_message(message.chat.id, reminder)
         
-    def admin_start(self):
-        @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
-        def admin(message):
-            self.admin_test(message)
-
+    def setup_reminder(self):
+        schedule.every(10).seconds.do(self.send_reminder)
+    
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
         @self.bot.message_handler(func=lambda message: True)
@@ -580,5 +584,8 @@ class BotHandlers():
             else:
                 username = message.from_user.username
                 bot_message = self.lang("random_text_reply", username) 
-                self.bot.send_message(message.chat.id, bot_message)      
+                self.bot.send_message(message.chat.id, bot_message)
+                
+            Thread(target=self.setup_reminder, daemon=True).start()
+        
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту

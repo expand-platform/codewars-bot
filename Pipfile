@@ -13,6 +13,7 @@ uvicorn = "*"
 watchdog = "*"
 psutil = "*"
 html2text = "*"
+schedule = "*"
 
 [dev-packages]
 
