@@ -32,9 +32,6 @@ class AccessLevel(custom_filters.AdvancedCustomFilter):
         username = message.from_user.username
         access_level = Database().get_user_access(username)
         return access_level in levels
-        # username = message.from_user.username
-        # access_level = Database().get_user_access(username)
-        # return access_level
 
         
 class BotHandlers():
@@ -71,7 +68,7 @@ class BotHandlers():
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
         
         markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["check_stats"])
-        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"])
+        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"], self.keyboard_buttons["story_mode"])
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
@@ -89,8 +86,8 @@ class BotHandlers():
         username = message.from_user.username
         self.command_use_log("/language_change", username, message.chat.id)
         markup = quick_markup(values=lang_buttons, row_width=1)
-        bot_message = self.lang("change_language", username)
-        sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
+        ask_lang_message = self.lang("change_language", username)
+        sent_message = self.bot.send_message(message.chat.id, ask_lang_message, reply_markup=markup)
 
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def lang_change_callback(call: CallbackQuery):
@@ -107,10 +104,14 @@ class BotHandlers():
                 message_id=call.message.message_id,
                 reply_markup=None
             )
-
+            
+            self.bot.delete_message(call.message.chat.id, sent_message.message_id)
             # Отправляем сообщение о смене языка
             self.bot.send_message(call.message.chat.id, bot_message)
             
+            user = self.database.users_collection.find_one({"tg_username": username})
+            if user['cw_nickname'] == "None":
+                self.authorization(message)
 
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
@@ -134,20 +135,9 @@ class BotHandlers():
             username = message.from_user.username
             self.database.new_user(username, "None")
 
-            cw_nickname = self.database.pull_user_cw_nickname(username)
-
-            if cw_nickname == "None":
-                bot_message = self.lang("start_bot_authorize", username)
-                text = bot_message.format(username)
-                
-                self.bot.send_message(message.chat.id, text) 
-                self.authorization(message)
-            else:
-                bot_message = self.lang("start_bot", username)
-                text = bot_message.format(username)
-                
-                self.bot.send_message(message.chat.id, text, reply_markup=markup) 
-                
+            bot_message = self.lang("start_bot", username)
+            text = bot_message.format(username)
+            
             print("user chat id:", message.chat.id)
             
             self.command_use_log("/start", username, message.chat.id)
@@ -181,7 +171,8 @@ class BotHandlers():
         )
         
             
-        self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans) 
+        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
+        self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message):
         markup = self.create_keyboard()
@@ -205,6 +196,7 @@ class BotHandlers():
             
             message_text = bot_reply.format(cw_username, honor_lvl, tasks_done)
             
+        
             self.database.update_codewars_nickname(username, cw_username)
             self.bot.send_message(message.chat.id, message_text, reply_markup=markup)
             
@@ -216,7 +208,6 @@ class BotHandlers():
         update = {"$set": {"totalDone_snum": user["codeChallenges"]["totalCompleted"]}}
         
         self.database.users_collection.update_one(filter, update, upsert=False)
-        
         
         
     def check_stats_command(self, message): 
@@ -253,6 +244,47 @@ class BotHandlers():
             bot_message = self.lang("check_stats_error", tg_username)
             self.bot.reply_to(message, bot_message)
 
+    
+    
+    # def send_sticker_list(self, message):
+    #     sticker_pack_name = "Astolfobydanveliar_by_fStikBot"  # Replace with the sticker pack name
+    #     sticker_set = self.bot.get_sticker_set(name=sticker_pack_name)
+    #     stickers_id = []
+    #     for sticker in sticker_set.stickers:
+    #         stickers_id.append(sticker.file_id)
+    #         print("STICKER: ", stickers_id)
+    #         print("STICKER: ", sticker)
+        
+    #     # print("STICKERS: ", stickers)  #! теперь бот отправляет Астольфо)))
+    #     self.bot.send_sticker(message.chat.id, )
+    
+    def story_mode(self, message):
+        username = message.from_user.username
+        
+        filter = {"tg_username": username}
+        user = self.database.users_collection.find_one(filter) 
+        
+        if user["story_mode"] == False:
+            update = {"$set": {"story_mode": True}}
+            
+        else: 
+            update = {"$set": {"story_mode": False}}
+            
+        self.database.users_collection.update_one(filter, update, upsert=False)
+        user = self.database.users_collection.find_one(filter)
+        
+        return user["story_mode"]
+        
+        
+        
+
+    
+     
+
+
+
+
+
     def random_level_and_task(self, message):
         
         username = message.from_user.username
@@ -266,13 +298,11 @@ class BotHandlers():
         # статы юзера
         stats = self.codewars_api.getuser_function(codewars_name, username)
         task_difference = stats["codeChallenges"]["totalCompleted"] - user["totalDone_snum"]
-
-        
-        # ! через дату баз сделай так что бы от точки а(старт юзера) до точки б (щас) задачки разблакло
-        
-        
+         
         if task_difference < 3:
-            self.bot.send_message(message.chat.id, self.lang("no_lvl_access", username))
+            needs_to_be_done = 3 - task_difference
+            
+            self.bot.send_message(message.chat.id, self.lang("no_lvl_access", username).format(needs_to_be_done)) 
             
         else:
             # остальной код
@@ -286,8 +316,38 @@ class BotHandlers():
             self.challenge_print(random_task, username, chat_id, True)
         
 
+            messages = [
+            self.lang("task_name", username).format(random_task["Challenge name"]),
+            self.lang("task_description", username).format(random_task['Description']),
+            self.lang("task_rank", username).format(random_task['Rank']['name']),
+            self.lang("task_url", username).format(random_task['Codewars link']),
+            ]
+
+            time.sleep(4)
+            
+            for i in messages:        
+                check = self.helpers.tg_api_try_except(i, username)
+                if check == "OK":
+                    self.bot.send_message(chat_id, i, parse_mode=self.parse_mode)
+                elif check == "TOO_LONG":
+                    text = self.lang("message_is_too_long", username)
+                    print(text)
+                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+        
+
+    def get_ranks(self, message):
+        ranks = []
+        
+        for button in lvl_buttons:
+            print("BUTTON: ", button)
+            # ranks.append(button)
+
+
+# ! иногда есть ошибка Bad requsest, message is too long
     def random_task_command(self, message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
+        # self.get_ranks(message)
+        
         username = message.from_user.username
         bot_message = self.lang("random_task_level_pick", username)
 
@@ -500,6 +560,9 @@ class BotHandlers():
             
             elif message.text == "Find task 🔍":
                 self.find_task_command(message)
+            
+            elif message.text == "Story mode 🏕":
+                self.story_mode(message)
                 
             elif message.text == "Random task and lvl 🎲":
                 self.random_level_and_task(message)

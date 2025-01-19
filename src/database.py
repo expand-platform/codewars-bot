@@ -28,7 +28,7 @@ class Database:
         if user:
             print(f"Пользователь с юзернеймом {username} уже существует.")
         else:
-            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG", "access_level": "user", "totalDone_snum": None}
+            document = {"tg_username": username, "cw_nickname": cw_login, "desired_language": "ENG", "access_level": "user", "totalDone_snum": None, "story_mode": False}
             self.users_collection.insert_one(document)
             print(f"Создан пользователь с юзернеймом {username}.")
 
