@@ -1,5 +1,6 @@
 MESSAGES_ENG = {
-    "start_bot": "Hi {}, this is an IT teacher bot. Let's authorize you in to your Codewars account to make your expereince brief and easy 👇",
+    "start_bot": "Hi {}, this is an IT teacher bot.",
+    "start_bot_authorize": "Hi {}, this is an IT teacher bot. Let's authorize you in to your Codewars account to make your expereince brief and easy 👇",
     "load_challenges_intro": "Let's steal some challenges from a codewars user.\n\nType a codewars username:",
     "load_challenges_count": "{} challenges. This is exact number of challenges we're going to steal (sorry, save) from user {}.\n\nIt might take some time, be patient...\n\nLet's get started...",
     "load_challenges_final": "Approximately {} challenges were loaded into database.",
