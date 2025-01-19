@@ -112,7 +112,9 @@ class BotHandlers():
             user = self.database.users_collection.find_one({"tg_username": username})
             if user['cw_nickname'] == "None":
                 self.authorization(message)
-
+            
+       
+            
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
         if lang == "ENG":
@@ -129,11 +131,10 @@ class BotHandlers():
     def start(self, message):
             markup = self.create_keyboard()
             
-            #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
-            #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
-            
             username = message.from_user.username
             self.database.new_user(username, "None")
+
+            self.lang_change(message)
 
             bot_message = self.lang("start_bot", username)
             text = bot_message.format(username)
@@ -141,8 +142,6 @@ class BotHandlers():
             print("user chat id:", message.chat.id)
             
             self.command_use_log("/start", username, message.chat.id)
-            #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
-            #? "бот запущен и ждёт команд, нажми /start"
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
@@ -170,8 +169,6 @@ class BotHandlers():
             reply_markup=markup
         )
         
-            
-        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message):
@@ -576,7 +573,7 @@ class BotHandlers():
                 bot_message = self.lang("help", username)  
                 self.bot.send_message(message.chat.id, bot_message)
                 
-            elif message.text == "Authorize ⚙":
+            elif message.text == "Reauthorize ⚙":
                 self.authorization(message)
             
             else:

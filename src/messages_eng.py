@@ -30,6 +30,6 @@ MESSAGES_ENG = {
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
     "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... ({} tasks need to be completed)",
-    
+    "story_mode_selection": "Would u wish to continue in survival mode (no limits, almost like zombie apocalypse 🧟‍♀️) or would u like to try story mode (interesting adventure which will improve your level of humour (plss...))?"
     
 }
