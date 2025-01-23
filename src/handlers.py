@@ -11,7 +11,7 @@ from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons
-from src.helpers import Helpers
+from src.helpers.helpers import Helpers
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
@@ -38,7 +38,7 @@ class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
         self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids = self.admin_ids.split(",") 
+        self.admin_ids: list[str] = self.admin_ids.split(",") 
 
         self.bot: TeleBot = bot
 
@@ -72,6 +72,7 @@ class BotHandlers():
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
+
     
     def command_use_log(self, command, tg_user, chat_id):
         env = os.getenv("ENVIRONMENT") 
@@ -81,6 +82,7 @@ class BotHandlers():
                     pass
                 else:
                     self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+                    
 
     def lang_change(self, message: Message):
         username = message.from_user.username
@@ -140,7 +142,7 @@ class BotHandlers():
             text = bot_message.format(username)
             
             print("user chat id:", message.chat.id)
-            
+
             self.command_use_log("/start", username, message.chat.id)
 
     def start_command(self):
