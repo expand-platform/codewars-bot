@@ -5,15 +5,18 @@ name = "pypi"
 
 [packages]
 pytelegrambotapi = "*"
-python-dotenv = "*"
 pymongo = "*"
 requests = "*"
 fastapi = "*"
-uvicorn = "*"
 watchdog = "*"
 psutil = "*"
 html2text = "*"
+<<<<<<< HEAD
 schedule = "*"
+=======
+uvicorn = "*"
+python-dotenv = "*"
+>>>>>>> 552342d24c1c6e449153abf5fcf0aa42350d2e07
 
 [dev-packages]
 

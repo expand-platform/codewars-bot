@@ -13,7 +13,7 @@ from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons
-from src.helpers import Helpers
+from src.helpers.helpers import Helpers
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
@@ -40,7 +40,7 @@ class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
         self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids = self.admin_ids.split(",") 
+        self.admin_ids: list[str] = self.admin_ids.split(",") 
 
         self.bot: TeleBot = bot
 
@@ -73,6 +73,7 @@ class BotHandlers():
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
+
     
     def command_use_log(self, command, tg_user, chat_id):
         env = os.getenv("ENVIRONMENT") 
@@ -82,6 +83,7 @@ class BotHandlers():
                     pass
                 else:
                     self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+                    
 
     def lang_change(self, message: Message):
         username = message.from_user.username
@@ -114,7 +116,9 @@ class BotHandlers():
             
             if user['cw_nickname'] == "None":
                 self.authorization(message)
-
+            
+       
+            
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
         if lang == "ENG":
@@ -131,30 +135,25 @@ class BotHandlers():
     def start(self, message):
             markup = self.create_keyboard()
             
-            #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
-            #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
-            
             username = message.from_user.username
             self.database.new_user(username, "None")
+
+            self.lang_change(message)
 
             bot_message = self.lang("start_bot", username)
             text = bot_message.format(username)
             
-            self.bot.send_message(message.chat.id, text, reply_markup=markup)
-            self.lang_change(message)
-            
             print("user chat id:", message.chat.id)
-            
+
             self.command_use_log("/start", username, message.chat.id)
-            #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
-            #? "бот запущен и ждёт команд, нажми /start"
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
         @self.bot.message_handler(commands=["start"], func=lambda message: True) 
         def echo(message):
             self.start(message)
-            
+      
+    
     def authorization(self, message):
         username = message.from_user.username
         img_path = "src/images/nickname_example.png"
@@ -166,7 +165,7 @@ class BotHandlers():
         markup.add(cw_signin_page_button)
         
         self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.lang("nickname_example", username))
-        
+
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
             text=self.lang("asking_cwusername", username),
@@ -177,6 +176,7 @@ class BotHandlers():
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message):
+        markup = self.create_keyboard()
         username = message.from_user.username
         
         filter = {"tg_username": username}
@@ -185,7 +185,8 @@ class BotHandlers():
         
         if "reason" in user_info:
             print("USER ISN'T FOUND")
-            self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
+            self.authorization(message)
+            # self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
         
         else:
             bot_reply = self.lang("successful_authorization", username)
@@ -198,7 +199,7 @@ class BotHandlers():
             
         
             self.database.update_codewars_nickname(username, cw_username)
-            self.bot.send_message(message.chat.id, message_text)
+            self.bot.send_message(message.chat.id, message_text, reply_markup=markup)
             
             if user["totalDone_snum"] == None:
                 self.record_first_info(message.text, username, filter)
@@ -578,7 +579,7 @@ class BotHandlers():
                 bot_message = self.lang("help", username)  
                 self.bot.send_message(message.chat.id, bot_message)
                 
-            elif message.text == "Authorize ⚙":
+            elif message.text == "Reauthorize ⚙":
                 self.authorization(message)
             
             else:

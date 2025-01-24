@@ -1,5 +1,5 @@
 bot: 
-	uvicorn main:app --reload
+	pipenv run uvicorn main:app
 
 production:
 	uvicorn main:app

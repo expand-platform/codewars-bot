@@ -56,6 +56,19 @@ class Database:
         else:
             print(f"Пользователь с именем '{username}' не найден в базе данных.")
             return
+        
+    def pull_user_cw_nickname(self, username: str):
+        """Эта функция находит данные пользователя (например уровень), имея только юзернейм, в эту функцию нужно кидать только юзернейм"""
+        filter = {"tg_username": username}
+        user = self.users_collection.find_one(filter) 
+
+        # Проверка, найден ли пользователь
+        if user:
+            cw_nickname = user.get("cw_nickname")
+            return cw_nickname
+        else:
+            print(f"Пользователь с именем '{username}' не найден в базе данных.")
+            return
     
     def is_challenge_in_db(self, challenge_slug) -> Union[dict, None]:
         """ return None if no challenge exists """

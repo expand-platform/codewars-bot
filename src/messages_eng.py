@@ -1,5 +1,6 @@
 MESSAGES_ENG = {
-    "start_bot": "Hi {}, this is an IT teacher bot. Let's authorize you in to your Codewars account to make your expereince brief and easy 👇",
+    "start_bot": "Hi {}, this is an IT teacher bot.",
+    "start_bot_authorize": "Hi {}, this is an IT teacher bot. Let's authorize you in to your Codewars account to make your expereince brief and easy 👇",
     "load_challenges_intro": "Let's steal some challenges from a codewars user.\n\nType a codewars username:",
     "load_challenges_count": "{} challenges. This is exact number of challenges we're going to steal (sorry, save) from user {}.\n\nIt might take some time, be patient...\n\nLet's get started...",
     "load_challenges_final": "Approximately {} challenges were loaded into database.",
@@ -20,7 +21,7 @@ MESSAGES_ENG = {
     "load_tasks_error": "There was an error while loading tasks.\n\nMaybe you typed wrong username, or this user does not have any completed challenges?",
     "check_stats_error": "There was an error while checking stats of that user.\n\nDouble-check the name of your user and try again.",
     "change_language": "Which language is better for you?",
-    "language_changed": "You changed language to English.",
+    "language_changed": "Now your language is English ✅",
     "help": "Welcome to the unofficial Codewars bot for developers. Here, you can explore a variety of coding challenges across multiple programming languages.\n\nFor any inquiries or assistance, please feel free to contact us at: @damir_expand",
     "random_task_n_lvl": "Your random task by random level is: \n{}",
     "asking_cwusername": "Send me your Codewars username",
@@ -29,6 +30,7 @@ MESSAGES_ENG = {
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
     "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... ({} tasks need to be completed)",
+<<<<<<< HEAD
     "reminders": [
         "Sharpen your coding skills today! 🧠💻 Log in to Codewars and conquer a kata!",
         "Hey, coder! 🛠️ Your daily practice is calling. Ready to level up? 🚀",
@@ -41,5 +43,8 @@ MESSAGES_ENG = {
         "Daily practice makes perfect! 🎯 Start solving a Codewars challenge now! ⚡",
         "A quick Codewars kata a day keeps the bugs away! 🐛💻 Get started now!"
     ],
+=======
+    "story_mode_selection": "Would u wish to continue in survival mode (no limits, almost like zombie apocalypse 🧟‍♀️) or would u like to try story mode (interesting adventure which will improve your level of humour (plss...))?"
+>>>>>>> 552342d24c1c6e449153abf5fcf0aa42350d2e07
     
 }

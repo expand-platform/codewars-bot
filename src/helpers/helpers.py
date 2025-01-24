@@ -1,9 +1,11 @@
 import re
 
+
 """обрабатываем сообщение пользователя и формирует slug"""
 class Helpers():
-    def __init__(self):
+    def __init__(self, ):
         pass
+
 
     def transform_challenge_string(self, message):
         user_input = message.text
@@ -18,3 +20,4 @@ class Helpers():
             return "OK"
         elif len(text) > max_length:
             return "TOO_LONG"
+
