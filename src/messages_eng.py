@@ -30,7 +30,6 @@ MESSAGES_ENG = {
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
     "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... ({} tasks need to be completed)",
-<<<<<<< HEAD
     "reminders": [
         "Sharpen your coding skills today! 🧠💻 Log in to Codewars and conquer a kata!",
         "Hey, coder! 🛠️ Your daily practice is calling. Ready to level up? 🚀",
@@ -43,8 +42,6 @@ MESSAGES_ENG = {
         "Daily practice makes perfect! 🎯 Start solving a Codewars challenge now! ⚡",
         "A quick Codewars kata a day keeps the bugs away! 🐛💻 Get started now!"
     ],
-=======
     "story_mode_selection": "Would u wish to continue in survival mode (no limits, almost like zombie apocalypse 🧟‍♀️) or would u like to try story mode (interesting adventure which will improve your level of humour (plss...))?"
->>>>>>> 552342d24c1c6e449153abf5fcf0aa42350d2e07
     
 }

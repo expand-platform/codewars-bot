@@ -24,7 +24,7 @@ class Admins():
             },
         ]
 
-            
+    # ! Если активный юзер равен выбраному админу, то отправляем сообщение
     def notify_admins(self, selected_admins: list[str], message: str):
         for admin_name in selected_admins:
             for admin in self.admins:
