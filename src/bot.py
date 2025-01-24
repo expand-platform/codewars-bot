@@ -1,8 +1,11 @@
 import os
 from dotenv import load_dotenv
 
-import telebot
-from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
+from telebot import TeleBot, ExceptionHandler
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
+
+from src.helpers.Dotenv import Dotenv
+from src.helpers.Admin import Admins  
 
 from src.bot_commands import commands
 
@@ -13,14 +16,18 @@ from src.filters import AccessLevel, ExceptionHandler
 class Bot: 
     def __init__(self) -> None:
         load_dotenv()
+        self.parse_mode = "Markdown"
         
-        self.bot_token = os.getenv("TOKEN_FOR_TGBOT")
-        self.bot = telebot.TeleBot(self.bot_token, exception_handler=ExceptionHandler())
+        self.bot_token = Dotenv().bot_token
+        self.bot = TeleBot(self.bot_token, exception_handler=ExceptionHandler())
         
         self.commands = commands
         
         self.handlers = BotHandlers(self.bot)
         self.admin_handlers = Admin(self.bot)
+
+        #? helpers
+        self.admins = Admins(self.bot)
         
         self.startBot()
     
@@ -34,6 +41,7 @@ class Bot:
     def startBot(self):
         """ set up hanlders, starts bot polling """
         print("Bot started")
+        # self.admins.notify_admins(selected_admins=["Дамир"], message="Начинаю работу... /start")
         
         self.setup_command_menu()
         self.handlers.start_handlers()

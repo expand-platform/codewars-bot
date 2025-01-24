@@ -21,7 +21,7 @@ MESSAGES_ENG = {
     "load_tasks_error": "There was an error while loading tasks.\n\nMaybe you typed wrong username, or this user does not have any completed challenges?",
     "check_stats_error": "There was an error while checking stats of that user.\n\nDouble-check the name of your user and try again.",
     "change_language": "Which language is better for you?",
-    "language_changed": "You changed language to English.",
+    "language_changed": "Now your language is English ✅",
     "help": "Welcome to the unofficial Codewars bot for developers. Here, you can explore a variety of coding challenges across multiple programming languages.\n\nFor any inquiries or assistance, please feel free to contact us at: @damir_expand",
     "random_task_n_lvl": "Your random task by random level is: \n{}",
     "asking_cwusername": "Send me your Codewars username",
@@ -30,6 +30,18 @@ MESSAGES_ENG = {
     "codewars_signin_button": "Codewars sign in page",
     "nickname_example": "Example of a nickname, located in your Codewars profile: ",
     "no_lvl_access": "Ohhh... the great witch saith thou hast no strength, yet... ({} tasks need to be completed)",
-    
+    "reminders": [
+        "Sharpen your coding skills today! 🧠💻 Log in to Codewars and conquer a kata!",
+        "Hey, coder! 🛠️ Your daily practice is calling. Ready to level up? 🚀",
+        "Consistency is key! 🔑 Tackle a Codewars challenge and keep the streak alive! 🌟",
+        "Small steps lead to big wins! 🏆 Solve a kata today and grow stronger in your craft.",
+        "Coding time! ⏳ Practice a kata on Codewars and crush your goals! 💪",
+        "Don’t let your skills rust! 🛡️ Jump into Codewars and polish them with a fresh kata!",
+        "Your brain needs a workout too! 🧠👾 Solve a kata and feed your inner problem-solver!",
+        "Reminder: Codewars awaits! 🚩 Complete one kata today and enjoy the progress!",
+        "Daily practice makes perfect! 🎯 Start solving a Codewars challenge now! ⚡",
+        "A quick Codewars kata a day keeps the bugs away! 🐛💻 Get started now!"
+    ],
+    "story_mode_selection": "Would u wish to continue in survival mode (no limits, almost like zombie apocalypse 🧟‍♀️) or would u like to try story mode (interesting adventure which will improve your level of humour (plss...))?"
     
 }

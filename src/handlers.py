@@ -1,6 +1,9 @@
 from requests import get
 from dotenv import load_dotenv
-import os
+import os 
+import html2text
+import schedule
+from threading import Thread
 
 from telebot import types, TeleBot, custom_filters
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -10,7 +13,7 @@ from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons
-from src.helpers import Helpers
+from src.helpers.helpers import Helpers
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
@@ -28,7 +31,7 @@ class BotHandlers():
     def __init__(self, bot):
         load_dotenv()
         self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids = self.admin_ids.split(",") 
+        self.admin_ids: list[str] = self.admin_ids.split(",") 
 
         self.bot: TeleBot = bot
 
@@ -61,6 +64,7 @@ class BotHandlers():
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
         return markup
+
     
     def command_use_log(self, command, tg_user, chat_id):
         env = os.getenv("ENVIRONMENT") 
@@ -70,6 +74,7 @@ class BotHandlers():
                     pass
                 else:
                     self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+                    
 
     def lang_change(self, message: Message):
 
@@ -97,9 +102,12 @@ class BotHandlers():
             self.bot.send_message(call.message.chat.id, bot_message)
             
             user = self.database.users_collection.find_one({"tg_username": username})
+            
             if user['cw_nickname'] == "None":
                 self.authorization(message)
-
+            
+       
+            
     def lang(self, message, username):
         lang = self.database.pull_user_lang(username)
         if lang == "ENG":
@@ -116,21 +124,18 @@ class BotHandlers():
     def start(self, message):
             markup = self.create_keyboard()
             
-            #? Предлагаю на /start сразу просить человека создать / привязать аккаунт из Codewars и ввести свой user_name из Codewars в бот. 
-            #? Так у нас сразу на руках будет юзернейм и команда для её привязки не будет нужна (ведь, по сути, весь наш функционал завязан именно на привязке к аккаунту Кодварс)
-            
             username = message.from_user.username
             self.database.new_user(username, "None")
+
+            self.lang_change(message)
 
             bot_message = self.helpers.lang("start_bot", username)
             text = bot_message.format(username)
             self.bot.send_message(message.chat.id, text, reply_markup=markup)
             
             print("user chat id:", message.chat.id)
-            
+
             self.command_use_log("/start", username, message.chat.id)
-            #? Ещё на старте бота предлагаю добавить отправку сообщения админам, мол,
-            #? "бот запущен и ждёт команд, нажми /start"
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
@@ -158,8 +163,6 @@ class BotHandlers():
             reply_markup=markup
         )
         
-            
-        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.helpers.lang("nickname_example", username))
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message):
@@ -445,19 +448,28 @@ class BotHandlers():
     #         bot_message = self.helpers.lang("load_challenges_final", username)   
     #         bot_final_message_text = bot_message.format(challenges_count) 
                     
-    #         self.bot.send_message(
-    #             chat_id=message.chat.id, 
-    #             text=bot_final_message_text, 
-    #             parse_mode=self.parse_mode
-    #         )
-    #     except:
-    #         bot_message = self.helpers.lang("load_tasks_error", username) 
-    #         self.bot.send_message(
-    #             chat_id=message.chat.id, 
-    #             text=bot_message, 
-    #             parse_mode=self.parse_mode
-    #         )
-
+        #     self.bot.send_message(
+        #         chat_id=message.chat.id, 
+        #         text=bot_final_message_text, 
+        #         parse_mode=self.parse_mode
+        #     )
+        # except:
+        #     bot_message = self.lang("load_tasks_error", username) 
+        #     self.bot.send_message(
+        #         chat_id=message.chat.id, 
+        #         text=bot_message, 
+        #         parse_mode=self.parse_mode
+        #     )
+    
+    def send_reminder(self, message):
+        username = message.from_user.username
+        reminders = self.lang("reminders", username)
+        reminder = random.choice(reminders)
+        self.bot.send_message(message.chat.id, reminder)
+        
+    def setup_reminder(self):
+        schedule.every(10).seconds.do(self.send_reminder)
+    
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
         @self.bot.message_handler(func=lambda message: True)
@@ -486,11 +498,14 @@ class BotHandlers():
                 bot_message = self.helpers.lang("help", username)  
                 self.bot.send_message(message.chat.id, bot_message)
                 
-            elif message.text == "Authorize ⚙":
+            elif message.text == "Reauthorize ⚙":
                 self.authorization(message)
             
             else:
                 username = message.from_user.username
-                bot_message = self.helpers.lang("random_text_reply", username) 
-                self.bot.send_message(message.chat.id, bot_message)      
+                bot_message = self.lang("random_text_reply", username) 
+                self.bot.send_message(message.chat.id, bot_message)
+                
+            Thread(target=self.setup_reminder, daemon=True).start()
+        
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
