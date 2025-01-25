@@ -24,13 +24,16 @@ class Admins():
             },
         ]
 
-    # ! Если активный юзер равен выбраному админу, то отправляем сообщение
+    # ! Пожалуйста, протестируйте, работает ли try-except
     def notify_admins(self, selected_admins: list[str], message: str):
         for admin_name in selected_admins:
             for admin in self.admins:
                 # if this is a selected admin
                 if admin_name == admin["name"]:
-                    self.bot.send_message(admin["id"], message, parse_mode=self.parse_mode)
-            
+                    try: 
+                        self.bot.send_message(admin["id"], message, parse_mode=self.parse_mode)
+                    except: 
+                        print(f"Для тебя нет уведомлений во время {message}")
+                        pass
             
 
