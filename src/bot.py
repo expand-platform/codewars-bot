@@ -36,13 +36,14 @@ class Bot:
         keyboard = InlineKeyboardMarkup()
         button = InlineKeyboardButton("Start", callback_data='start')
         keyboard.add(button)
-        self.bot.add_custom_filter(AccessLevel())
+        access_level = AccessLevel()
+        self.bot.add_custom_filter(access_level)
 
     def startBot(self):
         """ set up hanlders, starts bot polling """
         print("Bot started")
         # ! Пожалуйста, протестируйте эту штуку у себя
-        # self.admins.notify_admins(selected_admins=["Дамир"], message="Начинаю работу... /start")
+        self.admins.notify_admins(selected_admins=["Дамир", "Даня"], message="Начинаю работу... /start")
          
         self.setup_command_menu()
         self.handlers.start_handlers()

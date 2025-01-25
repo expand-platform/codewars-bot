@@ -7,7 +7,7 @@ from src.database import Database
 from src.helpers.helpers import Helpers
 
 class Admin():
-    def __init__(self, bot: TeleBot):
+    def __init__(self, bot: TeleBot): 
         self.bot = bot
 
         self.database = Database()
