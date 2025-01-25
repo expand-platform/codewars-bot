@@ -41,8 +41,9 @@ class Bot:
     def startBot(self):
         """ set up hanlders, starts bot polling """
         print("Bot started")
+        # ! Пожалуйста, протестируйте эту штуку у себя
         # self.admins.notify_admins(selected_admins=["Дамир"], message="Начинаю работу... /start")
-        
+         
         self.setup_command_menu()
         self.handlers.start_handlers()
         self.admin_handlers.start_admin_handlers()
