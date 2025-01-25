@@ -105,21 +105,6 @@ class BotHandlers():
             
             if user['cw_nickname'] == "None":
                 self.authorization(message)
-            
-       
-            
-    def lang(self, message, username):
-        lang = self.database.pull_user_lang(username)
-        if lang == "ENG":
-            message = self.eng_language[message]
-            return message
-        elif lang == "RUS":
-            message = self.rus_language[message]
-            return message
-        elif lang == "UKR":
-            message = self.ukr_language[message]
-            return message
-        
 
     def start(self, message):
             markup = self.create_keyboard()
@@ -503,7 +488,7 @@ class BotHandlers():
             
             else:
                 username = message.from_user.username
-                bot_message = self.lang("random_text_reply", username) 
+                bot_message = self.helpers.lang("random_text_reply", username) 
                 self.bot.send_message(message.chat.id, bot_message)
                 
             Thread(target=self.setup_reminder, daemon=True).start()

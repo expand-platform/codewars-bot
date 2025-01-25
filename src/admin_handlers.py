@@ -4,7 +4,7 @@ from requests import get
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
-from src.helpers import Helpers
+from src.helpers.helpers import Helpers
 
 class Admin():
     def __init__(self, bot: TeleBot):
