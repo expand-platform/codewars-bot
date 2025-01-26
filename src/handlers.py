@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os 
 import html2text
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.mongodb import MongoDBJobStore
+from apscheduler.jobstores.memory import MemoryJobStore
 
 from telebot import types, TeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -43,11 +43,12 @@ class BotHandlers():
         self.codewars_api = Codewars_Challenges()
         self.helpers = Helpers(self.bot)
         self.admin_handlers = Admin(self.bot)
-        # self.scheduler = BackgroundScheduler(jobstores = {
-        #     'default': MongoDBJobStore(database=database_name, collection="jobs", client=self.client)
-        #     })
-        # self.scheduler = BackgroundScheduler()
-        self.scheduler = self.database.get_scheduler()
+
+        self.scheduler = BackgroundScheduler(
+            jobstores = {
+                'default': MemoryJobStore()
+            }
+        )
 
         self.keyboard_buttons = keyboard_buttons
         
@@ -466,7 +467,7 @@ class BotHandlers():
             
             # Check if a job with this ID already exists
             if not self.scheduler.get_job(job_id):
-                self.scheduler.add_job(self.send_reminder, 'interval', seconds=10, args=[chat_id, username], id=job_id, replace_existing=True)
+                self.scheduler.add_job(self.send_reminder, 'interval', days=3, args=[chat_id, username], id=job_id, replace_existing=True)
                 
             if not self.scheduler.running:
                 self.scheduler.start()
@@ -498,7 +499,7 @@ class BotHandlers():
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message):
             # Stop the current reminder before starting a new one
-            self.shutdown_reminder(message)
+            # self.shutdown_reminder(message)
             
             if message.text == "Check stats 🏅":
                 self.check_stats_command(message)
@@ -533,7 +534,7 @@ class BotHandlers():
                 self.bot.send_message(message.chat.id, bot_message)
             
             # Start a new reminder job after handling the user's message
-            self.setup_reminder(message)
+            # self.setup_reminder(message)
                
         
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
