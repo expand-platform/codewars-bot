@@ -7,4 +7,5 @@ production:
 git:
 	git add . && git commit && git push
 
-
+requirements:
+	pip freeze > requirements.txt
