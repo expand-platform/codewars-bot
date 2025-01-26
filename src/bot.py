@@ -8,13 +8,12 @@ from src.helpers.Dotenv import Dotenv
 from src.helpers.Admin import Admins  
 
 from src.bot_commands import commands
-from src.handlers import BotHandlers, AccessLevel
+
+from src.handlers import BotHandlers
+from src.admin_handlers import Admin
+from src.filters import ExceptionHandler, AccessLevel
 
 
-
-class ExceptionHandler(ExceptionHandler):
-    def handle(self, exception):
-        print("❌ Exception occured: ", exception)
 
 class Bot: 
     def __init__(self) -> None:
@@ -27,6 +26,7 @@ class Bot:
         self.commands = commands
         
         self.handlers = BotHandlers(self.bot)
+        self.admin_handlers = Admin(self.bot)
 
         #? helpers
         self.admins = Admins(self.bot)
@@ -43,12 +43,11 @@ class Bot:
     def startBot(self):
         """ set up hanlders, starts bot polling """
         print("Bot started")
-        # self.admins.notify_admins(selected_admins=["Дамир"], message="Начинаю работу... /start")
-        
+         
         self.setup_command_menu()
+        self.admin_handlers.start_admin_handlers()
         self.handlers.start_handlers()
-
-        #? Теперь есть класс Dotenv для работы с Dotenv 
+         
         env = os.getenv("ENVIRONMENT")   
         if env == "DEVELOPMENT":
             print("development")
