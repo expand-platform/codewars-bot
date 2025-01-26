@@ -2,8 +2,8 @@ from requests import get
 from dotenv import load_dotenv
 import os 
 import html2text
-import schedule
-from threading import Thread
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.mongodb import MongoDBJobStore
 
 from telebot import types, TeleBot, custom_filters
 from telebot.types import BotCommand, Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -52,6 +52,11 @@ class BotHandlers():
         self.database = Database()
         self.codewars_api = Codewars_Challenges()
         self.helpers = Helpers()
+        # self.scheduler = BackgroundScheduler(jobstores = {
+        #     'default': MongoDBJobStore(database=database_name, collection="jobs", client=self.client)
+        #     })
+        # self.scheduler = BackgroundScheduler()
+        self.scheduler = self.database.get_scheduler()
 
         self.keyboard_buttons = keyboard_buttons
         
@@ -539,19 +544,55 @@ class BotHandlers():
                 parse_mode=self.parse_mode
             )
     
-    def send_reminder(self, message):
-        username = message.from_user.username
+    def send_reminder(self, chat_id, username):
         reminders = self.lang("reminders", username)
         reminder = random.choice(reminders)
-        self.bot.send_message(message.chat.id, reminder)
+        self.bot.send_message(chat_id, reminder)
+
+    def setup_reminder(self, message):
+        try:
+            user_id = message.from_user.id
+            chat_id = message.chat.id
+            username = message.from_user.username
+            job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
+            reminders = self.lang("reminders", username)
+            
+            # Check if a job with this ID already exists
+            if not self.scheduler.get_job(job_id):
+                self.scheduler.add_job(self.send_reminder, 'interval', seconds=10, args=[chat_id, username], id=job_id, replace_existing=True)
+                
+            if not self.scheduler.running:
+                self.scheduler.start()
+                
+            print("setup_reminder: ", self.scheduler.get_jobs())
+        except Exception as e:
+            print("Error: ", e)
+
+    def shutdown_reminder(self, message):
+        user_id = message.from_user.id
+        job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
         
-    def setup_reminder(self):
-        schedule.every(10).seconds.do(self.send_reminder)
-    
+        # Remove the specific user's reminder job if it exists
+        if self.scheduler.get_job(job_id):
+            self.scheduler.remove_job(job_id)
+            # self.scheduler.shutdown()
+            
+        print("shutdown_reminder: ", self.scheduler.get_jobs())
+        
+    def admin(self, message):
+        self.bot.send_message(message.chat.id, "Only admin can see this message!")
+
     def handle_random_text(self):
-        """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
+        """This function handles random text from the user."""
+        @self.bot.message_handler(commands=['admin'], access_level=['admin'])
+        def send_admin(message):
+            self.admin(message)
+        
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message):
+            # Stop the current reminder before starting a new one
+            self.shutdown_reminder(message)
+            
             if message.text == "Start ✅":
                 self.start(message)
             
@@ -586,7 +627,9 @@ class BotHandlers():
                 username = message.from_user.username
                 bot_message = self.lang("random_text_reply", username) 
                 self.bot.send_message(message.chat.id, bot_message)
-                
-            Thread(target=self.setup_reminder, daemon=True).start()
+            
+            # Start a new reminder job after handling the user's message
+            self.setup_reminder(message)
+               
         
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
