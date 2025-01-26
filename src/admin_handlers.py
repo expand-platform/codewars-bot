@@ -24,7 +24,8 @@ class Admin():
     def admin_commands_start(self):
         @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
         def admin(message):
-            self.bot.send_message(message.chat.id, "Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks", parse_mode=self.parse_mode)
+            self.bot.send_message(message.chat.id, f"Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks")
+            
 
     def load_tasks_command(self):
         @self.bot.message_handler(commands=["load_tasks"], access_level=["admin"], func=lambda message: True) 

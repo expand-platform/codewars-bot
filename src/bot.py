@@ -11,7 +11,9 @@ from src.bot_commands import commands
 
 from src.handlers import BotHandlers
 from src.admin_handlers import Admin
-from src.filters import AccessLevel, ExceptionHandler
+from src.filters import ExceptionHandler, AccessLevel
+
+
 
 class Bot: 
     def __init__(self) -> None:
@@ -36,18 +38,15 @@ class Bot:
         keyboard = InlineKeyboardMarkup()
         button = InlineKeyboardButton("Start", callback_data='start')
         keyboard.add(button)
-        access_level = AccessLevel()
-        self.bot.add_custom_filter(access_level)
+        self.bot.add_custom_filter(AccessLevel())
 
     def startBot(self):
         """ set up hanlders, starts bot polling """
         print("Bot started")
-        # ! Пожалуйста, протестируйте эту штуку у себя
-        self.admins.notify_admins(selected_admins=["Дамир", "Даня"], message="Начинаю работу... /start")
          
         self.setup_command_menu()
-        self.handlers.start_handlers()
         self.admin_handlers.start_admin_handlers()
+        self.handlers.start_handlers()
          
         env = os.getenv("ENVIRONMENT")   
         if env == "DEVELOPMENT":
