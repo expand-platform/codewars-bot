@@ -10,7 +10,7 @@ class Codewars_Challenges:
         self.bot_token = os.getenv("TOKEN_FOR_TGBOT")
         self.database = Database()
 
-    def getuser_function(self, codewars_username: str, telegram_username: str):
+    def getuser_function(self, codewars_username: str):
         url = f"https://www.codewars.com/api/v1/users/{codewars_username}"
         response = requests.get(url)
         user = response.json()
@@ -25,17 +25,6 @@ class Codewars_Challenges:
         
         else:
             skills = user["skills"]
-        
-        user_info = {
-            "Codewars name": user["username"],
-            "Telegram name": telegram_username,
-            "Rank": user["ranks"]["overall"]["name"],
-            "Honor": user["honor"],
-            "Clan": user["clan"],
-            "Leaderboard": user["leaderboardPosition"],
-            "Skills": user["skills"],
-            "Code challenges": user["codeChallenges"]
-        }
         
         string_form = f"Codewars name: {user["username"]}\n\nTelegram name: {telegram_username}\n\nRank: {user["ranks"]["overall"]["name"]}\n\nHonor: {user["honor"]}\n\nClan: {user["clan"]}\n\nLeaderboard: {user["leaderboardPosition"]}\n\nSkills: {skills}\n\nCode challenges: {user["codeChallenges"]["totalCompleted"]}\n\nScore: {user["ranks"]["overall"]["score"]}"
         return string_form

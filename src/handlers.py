@@ -1,4 +1,3 @@
-from dotenv import load_dotenv
 import os 
 import schedule
 from threading import Thread
@@ -12,6 +11,7 @@ from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons
 from src.helpers.helpers import Helpers
+from src.helpers.Dotenv import Dotenv
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
@@ -25,9 +25,7 @@ import random
  
 class BotHandlers():
     def __init__(self, bot):
-        load_dotenv()
-        self.admin_ids = os.getenv("ADMIN_IDS") 
-        self.admin_ids: list[str] = self.admin_ids.split(",") 
+        self.admin_ids = Dotenv().admin_ids
 
         self.bot: TeleBot = bot
 
@@ -45,8 +43,6 @@ class BotHandlers():
         
         self.markup = None
         
-    
-    
     def start_handlers(self):
         self.start_command()
         self.handle_random_text() 
@@ -59,25 +55,14 @@ class BotHandlers():
         markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"], self.keyboard_buttons["story_mode"])
         markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
         
-        return markup
-
-    
-    def command_use_log(self, command, tg_user, chat_id):
-        env = os.getenv("ENVIRONMENT") 
-        if env == "PRODUCTION":
-            for value in self.admin_ids: 
-                if str(chat_id) == str(value):
-                    pass
-                else:
-                    self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
-                    
+        return markup                   
 
     def lang_change(self, message: Message):
 
         username = message.from_user.username
-        self.command_use_log("/language_change", username, message.chat.id)
+        self.helpers.command_use_log("/language_change", username, message.chat.id)
         markup = quick_markup(values=lang_buttons, row_width=1)
-        ask_lang_message = self.helpers.lang("change_language", username)
+        ask_lang_message = self.helpers.lang("change_language", message)
         sent_message = self.bot.send_message(message.chat.id, ask_lang_message, reply_markup=markup)
 
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
@@ -85,9 +70,9 @@ class BotHandlers():
             lang = call.data
             username = call.from_user.username
 
-            self.database.update_user_language(username, lang)
+            self.database.update_user_language(message, lang)
 
-            bot_message = self.helpers.lang("language_changed", username)
+            bot_message = self.helpers.lang("language_changed", message)
             self.bot.edit_message_reply_markup(
                 chat_id=call.message.chat.id,
                 message_id=call.message.message_id,
@@ -102,21 +87,22 @@ class BotHandlers():
             if user['cw_nickname'] == "None":
                 self.authorization(message)
 
-    def start(self, message):
+    def start(self, message: Message):
             markup = self.create_keyboard()
             
             username = message.from_user.username
-            self.database.new_user(username, "None")
+
+            self.database.new_user(username, "None", message)
 
             self.lang_change(message)
 
-            bot_message = self.helpers.lang("start_bot", username)
+            bot_message = self.helpers.lang("start_bot", message)
             text = bot_message.format(username)
             self.bot.send_message(message.chat.id, text, reply_markup=markup)
             
             print("user chat id:", message.chat.id)
 
-            self.command_use_log("/start", username, message.chat.id)
+            self.helpers.command_use_log("/start", username, message.chat.id)
 
     def start_command(self):
         """Запускаем бота, а также добавляет пользователя в базу данных, если его там нет"""
@@ -125,28 +111,28 @@ class BotHandlers():
             self.start(message)
       
     
-    def authorization(self, message):
+    def authorization(self, message: Message):
         username = message.from_user.username
         img_path = "src/images/nickname_example.png"
         normalised_img_path = os.path.normpath(img_path)
-        self.command_use_log("/authorize", username, message.chat.id)
+        self.helpers.command_use_log("/authorize", username, message.chat.id)
         
         markup =  InlineKeyboardMarkup()
-        cw_signin_page_button = InlineKeyboardButton(self.helpers.lang("codewars_signin_button", username), url="https://www.codewars.com/users/sign_in")
+        cw_signin_page_button = InlineKeyboardButton(self.helpers.lang("codewars_signin_button", message), url="https://www.codewars.com/users/sign_in")
         markup.add(cw_signin_page_button)
         
-        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.helpers.lang("nickname_example", username))
+        self.bot.send_photo(message.chat.id, open(normalised_img_path, "rb"), caption=self.helpers.lang("nickname_example", message))
 
         bot_message = self.bot.send_message(
             chat_id=message.chat.id,
-            text=self.helpers.lang("asking_cwusername", username),
+            text=self.helpers.lang("asking_cwusername", message),
             parse_mode=self.parse_mode,
             reply_markup=markup
         )
         
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
-    def authorization_ans(self, message):
+    def authorization_ans(self, message: Message):
         markup = self.create_keyboard()
         username = message.from_user.username
         
@@ -160,7 +146,7 @@ class BotHandlers():
             # self.bot.send_message(message.chat.id, self.lang("authorization_error", username))
         
         else:
-            bot_reply = self.helpers.lang("successful_authorization", username)
+            bot_reply = self.helpers.lang("successful_authorization", message)
             
             cw_username = user_info["username"]
             honor_lvl = user_info["honor"]
@@ -169,7 +155,7 @@ class BotHandlers():
             message_text = bot_reply.format(cw_username, honor_lvl, tasks_done)
             
         
-            self.database.update_codewars_nickname(username, cw_username)
+            self.database.update_codewars_nickname(message, cw_username)
             self.bot.send_message(message.chat.id, message_text, reply_markup=markup)
             
             if user["totalDone_snum"] == None:
@@ -182,55 +168,27 @@ class BotHandlers():
         self.database.users_collection.update_one(filter, update, upsert=False)
         
         
-    def check_stats_command(self, message): 
+    def check_stats_command(self, message: Message): 
             username = message.from_user.username
+            self.helpers.command_use_log("/check_stats", username, message.chat.id)
             
             filter = {"tg_username": username}
             user = self.database.users_collection.find_one(filter)
             
-            if user["cw_nickname"] == "None": 
-                print("USER DOESN'T HAVE CW ACC")
-                message_format = self.helpers.lang("ask_codewars_username", username)
-                bot_message = self.bot.send_message(
-                    chat_id=message.chat.id, 
-                    text=message_format, 
-                    parse_mode=self.parse_mode
-                )
-                self.bot.register_next_step_handler(message=bot_message, callback=lambda msg:self.check_stats_response(message, msg.text))
-                
-            else:
-                print("USER HAS CW ACC")
-                self.check_stats_response(message, user["cw_nickname"])
+            self.check_stats_response(message, user["cw_nickname"])
 
-            self.command_use_log("/check_stats", username, message.chat.id)
 
-    def check_stats_response(self, message, cw_nickname):
+    def check_stats_response(self, message: Message, cw_nickname: str):
         tg_username = message.from_user.username
-
-        self.database.update_codewars_nickname(tg_username, cw_nickname)
         
         try:
             user_stats = self.codewars_api.check_user_stats(cw_nickname, tg_username)    
             self.bot.reply_to(message, user_stats)
         except:
-            bot_message = self.helpers.lang("check_stats_error", tg_username)
+            bot_message = self.helpers.lang("check_stats_error", message)
             self.bot.reply_to(message, bot_message)
 
-    
-    
-    # def send_sticker_list(self, message):
-    #     sticker_pack_name = "Astolfobydanveliar_by_fStikBot"  # Replace with the sticker pack name
-    #     sticker_set = self.bot.get_sticker_set(name=sticker_pack_name)
-    #     stickers_id = []
-    #     for sticker in sticker_set.stickers:
-    #         stickers_id.append(sticker.file_id)
-    #         print("STICKER: ", stickers_id)
-    #         print("STICKER: ", sticker)
-        
-    #     # print("STICKERS: ", stickers)  #! теперь бот отправляет Астольфо)))
-    #     self.bot.send_sticker(message.chat.id, )
-    
-    def story_mode(self, message):
+    def story_mode(self, message: Message):
         username = message.from_user.username
         
         filter = {"tg_username": username}
@@ -247,7 +205,7 @@ class BotHandlers():
         
         return user["story_mode"]
         
-    def random_level_and_task(self, message):
+    def random_level_and_task(self, message: Message):
         
         username = message.from_user.username
         chat_id = message.chat.id
@@ -264,28 +222,28 @@ class BotHandlers():
         if task_difference < 3:
             needs_to_be_done = 3 - task_difference
             
-            self.bot.send_message(message.chat.id, self.helpers.lang("no_lvl_access", username).format(needs_to_be_done)) 
+            self.bot.send_message(message.chat.id, self.helpers.lang("no_lvl_access", message).format(needs_to_be_done)) 
             
         else:
             # остальной код
             
             self.bot.send_dice(message.chat.id, emoji="🎲")
-            self.command_use_log("/random_level_and_task", username, message.chat.id)
+            self.helpers.command_use_log("/random_level_and_task", username, message.chat.id)
             
             challenges = list(self.database.challenges_collection.find({}))
             random_task = random.choice(challenges)
             
-            self.helpers.challenge_print(random_task, username, chat_id, True)
+            self.helpers.challenge_print(random_task, message, chat_id, True)
 
-    def random_task_command(self, message):
+    def random_task_command(self, message: Message):
         markup = quick_markup(values=lvl_buttons, row_width=2)
         
         username = message.from_user.username
-        bot_message = self.helpers.lang("random_task_level_pick", username)
+        bot_message = self.helpers.lang("random_task_level_pick", message)
 
         # Отправляем сообщение с кнопками
         sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
-        self.command_use_log("/random_task", username, message.chat.id)
+        self.helpers.command_use_log("/random_task", username, message.chat.id)
 
         """Случайная задача из коллекции"""
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
@@ -294,7 +252,7 @@ class BotHandlers():
 
             # Получаем уровень из данных кнопки
             level = call.data.replace('_', ' ')
-            bot_callback = self.helpers.lang("random_task_on_screen_answer", username)
+            bot_callback = self.helpers.lang("random_task_on_screen_answer", message)
             callback_text = bot_callback.format(level)
             self.bot.answer_callback_query(call.id, callback_text)
 
@@ -322,29 +280,29 @@ class BotHandlers():
                     
                 # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
-                bot_message = self.helpers.lang("random_task_not_found", username)
+                bot_message = self.helpers.lang("random_task_not_found", message)
                 self.bot.send_message(chat_id, bot_message)
 
-    def find_task_command(self, message):
+    def find_task_command(self, message: Message):
         """Поиск задачи из кодварса по названию"""
         username = message.from_user.username
-        message_format = self.helpers.lang("find_task_ask_name", username)
+        message_format = self.helpers.lang("find_task_ask_name", message)
         bot_message = self.bot.send_message(
             chat_id=message.chat.id, 
             text=message_format, 
             parse_mode=self.parse_mode
         )
-        self.command_use_log("/find_task", username, message.chat.id) 
+        self.helpers.command_use_log("/find_task", username, message.chat.id) 
         self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
         
-    def find_task_response(self, message):
+    def find_task_response(self, message: Message):
         username = message.from_user.username
         chat_id = message.chat.id
         result = self.helpers.transform_challenge_string(message)
         challenge_api = self.codewars_api.get_challenge_info_by_slug(result)  
 
         if challenge_api == 404:
-            bot_message = self.helpers.lang("find_task_not_found", username)
+            bot_message = self.helpers.lang("find_task_not_found", message)
             self.bot.reply_to(message, bot_message)
         else:
             filter = {"Slug": result}
@@ -358,7 +316,7 @@ class BotHandlers():
                 self.helpers.challenge_print(challenge_api, username, chat_id, False)
             # TODO: проверять длину только у описания
     
-    def send_reminder(self, message):
+    def send_reminder(self, message: Message):
         username = message.from_user.username
         reminders = self.lang("reminders", username)
         reminder = random.choice(reminders)
@@ -370,7 +328,7 @@ class BotHandlers():
     def handle_random_text(self):
         """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
         @self.bot.message_handler(func=lambda message: True)
-        def handle_text(message):
+        def handle_text(message: Message):
             if message.text == "Check stats 🏅":
                 self.check_stats_command(message)
                 
@@ -391,8 +349,8 @@ class BotHandlers():
         
             elif message.text == "Help ❔":
                 username = message.from_user.username
-                self.command_use_log("/help", username, message.chat.id)
-                bot_message = self.helpers.lang("help", username)  
+                self.helpers.command_use_log("/help", username, message.chat.id)
+                bot_message = self.helpers.lang("help", message)  
                 self.bot.send_message(message.chat.id, bot_message)
                 
             elif message.text == "Reauthorize ⚙":
@@ -400,9 +358,26 @@ class BotHandlers():
             
             else:
                 username = message.from_user.username
-                bot_message = self.helpers.lang("random_text_reply", username) 
+                bot_message = self.helpers.lang("random_text_reply", message) 
                 self.bot.send_message(message.chat.id, bot_message)
                 
             Thread(target=self.setup_reminder, daemon=True).start()
         
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
+
+
+
+
+
+     # def send_sticker_list(self, message):
+    #     sticker_pack_name = "Astolfobydanveliar_by_fStikBot"  # Replace with the sticker pack name
+    #     sticker_set = self.bot.get_sticker_set(name=sticker_pack_name)
+    #     stickers_id = []
+    #     for sticker in sticker_set.stickers:
+    #         stickers_id.append(sticker.file_id)
+    #         print("STICKER: ", stickers_id)
+    #         print("STICKER: ", sticker)
+        
+    #     # print("STICKERS: ", stickers)  #! теперь бот отправляет Астольфо)))
+    #     self.bot.send_sticker(message.chat.id, )
+    

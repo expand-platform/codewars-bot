@@ -1,6 +1,7 @@
+from requests import get
+
 from telebot import TeleBot
 from telebot.types import Message
-from requests import get
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
@@ -23,18 +24,18 @@ class Admin():
 
     def admin_commands_start(self):
         @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
-        def admin(message):
+        def admin(message: Message):
             self.bot.send_message(message.chat.id, f"Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks")
             
 
     def load_tasks_command(self):
         @self.bot.message_handler(commands=["load_tasks"], access_level=["admin"], func=lambda message: True) 
-        def echo(message):
+        def echo(message: Message):
             """ load tasks from another user, saves them to db """  
 
             username = message.from_user.username
-            self.command_use_log("/load_tasks", username, message.chat.id)
-            message_format = self.helpers.lang("load_challenges_intro", username)     
+            self.helpers.command_use_log("/load_tasks", username, message.chat.id)
+            message_format = self.helpers.lang("load_challenges_intro", message)     
 
             bot_message = self.bot.send_message(
                 chat_id=message.chat.id, 
@@ -58,7 +59,7 @@ class Admin():
             total_pages = data_from_api["totalPages"] 
             challenges_count = data_from_api["totalItems"] 
 
-            bot_message = self.helpers.lang("load_challenges_count", username)   
+            bot_message = self.helpers.lang("load_challenges_count", message)   
             bot_reply_text = bot_message.format(challenges_count,cw_username)
             
             self.bot.send_message(
@@ -87,7 +88,7 @@ class Admin():
                         if challenge:
                             self.database.save_challenge(new_challenge=challenge_info)
                             
-            bot_message = self.helpers.lang("load_challenges_final", username)   
+            bot_message = self.helpers.lang("load_challenges_final", message)   
             bot_final_message_text = bot_message.format(challenges_count) 
                     
             self.bot.send_message(
@@ -96,7 +97,7 @@ class Admin():
                 parse_mode=self.parse_mode
             )
         except:
-            bot_message = self.helpers.lang("load_tasks_error", username) 
+            bot_message = self.helpers.lang("load_tasks_error", message) 
             self.bot.send_message(
                 chat_id=message.chat.id, 
                 text=bot_message, 

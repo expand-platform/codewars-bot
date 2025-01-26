@@ -1,11 +1,17 @@
 import re
+import os
+import time
+import html2text
+
+from telebot import TeleBot
+from telebot.types import Message
+
 from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
+
 from src.database import Database
-import time
-import html2text
-from telebot import TeleBot
+from src.helpers.Dotenv import Dotenv
 
 
 """обрабатываем сообщение пользователя и формирует slug"""
@@ -16,11 +22,24 @@ class Helpers():
         self.eng_language = MESSAGES_ENG
         self.rus_language = MESSAGES_RUS
         self.ukr_language = MESSAGES_UKR
+
+        self.parse_mode = "Markdown"
+
+        self.admin_ids = Dotenv().admin_ids
         
         self.bot: TeleBot = bot
+
+    def command_use_log(self, command, tg_user, chat_id):
+        env = os.getenv("ENVIRONMENT") 
+        if env == "PRODUCTION":
+            for value in self.admin_ids: 
+                if str(chat_id) == str(value):
+                    pass
+                else:
+                    self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
     
-    def lang(self, message, username):
-        lang = self.database.pull_user_lang(username)
+    def lang(self, message: Message):
+        lang = self.database.pull_user_lang(message)
         if lang == "ENG":
             message = self.eng_language[message]
             return message
@@ -31,7 +50,7 @@ class Helpers():
             message = self.ukr_language[message]
             return message
 
-    def transform_challenge_string(self, message):
+    def transform_challenge_string(self, message: Message):
         user_input = message.text
         remove_unnesecary_symbols = re.sub(r"[!?,.:;\-_`'\"/|\\]", " ", user_input)
         slug_transform = remove_unnesecary_symbols.split()
@@ -39,25 +58,26 @@ class Helpers():
         lowercase_result = result.lower()
         return lowercase_result
 
-    def tg_api_try_except(self, text: str, username: str, max_length=4095):
-        if len(text) <= max_length: 
+    def tg_api_try_except(self, text: str):
+        MAX_LENGTH=4095
+        if len(text) <= MAX_LENGTH: 
             return "OK"
-        elif len(text) > max_length:
+        elif len(text) > MAX_LENGTH:
             return "TOO_LONG"
 
-    def challenge_print(self, challenge_source, username, chat_id, sleep):
+    def challenge_print(self, challenge_source, message, chat_id, sleep):
         messages = [
-            self.lang("task_name", username).format(challenge_source["Challenge name"]),
-            self.lang("task_description", username).format(challenge_source['Description']),
-            self.lang("task_rank", username).format(challenge_source['Rank']['name']),
-            self.lang("task_url", username).format(challenge_source['Codewars link']),
+            self.lang("task_name", message).format(challenge_source["Challenge name"]),
+            self.lang("task_description", message).format(challenge_source['Description']),
+            self.lang("task_rank", message).format(challenge_source['Rank']['name']),
+            self.lang("task_url", message).format(challenge_source['Codewars link']),
         ]
 
         if sleep == True:
             time.sleep(4)
 
         for i in messages:        
-            check = self.tg_api_try_except(i, username) 
+            check = self.tg_api_try_except(i) 
 
             if check == "OK":
                 try:
@@ -70,5 +90,5 @@ class Helpers():
                 except:
                     self.bot.send_message(chat_id, i)
             elif check == "TOO_LONG":
-                text = self.lang("message_is_too_long", username)
+                text = self.lang("message_is_too_long", message)
                 self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
