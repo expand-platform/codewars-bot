@@ -1,6 +1,7 @@
 import os 
-import schedule
-from threading import Thread
+import html2text
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.mongodb import MongoDBJobStore
 
 from telebot import types, TeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
@@ -22,6 +23,8 @@ from src.keyboardButtons import keyboard_buttons
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import random
+
+from requests import get
  
 class BotHandlers():
     def __init__(self, bot):
@@ -38,6 +41,11 @@ class BotHandlers():
         self.codewars_api = Codewars_Challenges()
         self.helpers = Helpers(self.bot)
         self.admin_handlers = Admin(self.bot)
+        # self.scheduler = BackgroundScheduler(jobstores = {
+        #     'default': MongoDBJobStore(database=database_name, collection="jobs", client=self.client)
+        #     })
+        # self.scheduler = BackgroundScheduler()
+        self.scheduler = self.database.get_scheduler()
 
         self.keyboard_buttons = keyboard_buttons
         
@@ -138,7 +146,7 @@ class BotHandlers():
         
         filter = {"tg_username": username}
         user = self.database.users_collection.find_one(filter) 
-        user_info = self.codewars_api.getuser_function(message.text, username)
+        user_info = self.codewars_api.getuser_function(message.text)
         
         if "reason" in user_info:
             print("USER ISN'T FOUND")
@@ -162,7 +170,7 @@ class BotHandlers():
                 self.record_first_info(message.text, username, filter)
         
     def record_first_info(self, cw_username, username, filter):
-        user = self.codewars_api.getuser_function(cw_username, username) 
+        user = self.codewars_api.getuser_function(cw_username) 
         update = {"$set": {"totalDone_snum": user["codeChallenges"]["totalCompleted"]}}
         
         self.database.users_collection.update_one(filter, update, upsert=False)
@@ -216,7 +224,7 @@ class BotHandlers():
         codewars_name = user["cw_nickname"]
 
         # статы юзера
-        stats = self.codewars_api.getuser_function(codewars_name, username)
+        stats = self.codewars_api.getuser_function(codewars_name)
         task_difference = stats["codeChallenges"]["totalCompleted"] - user["totalDone_snum"]
          
         if task_difference < 3:
@@ -276,7 +284,7 @@ class BotHandlers():
                 challenge = result[0]
 
                 print("kata name:", challenge["Challenge name"])
-                self.helpers.challenge_print(challenge, username, chat_id, False)
+                self.helpers.challenge_print(challenge, message, chat_id, False)
                     
                 # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
@@ -309,26 +317,61 @@ class BotHandlers():
             challenge_database = self.database.challenges_collection.find_one(filter)
             if challenge_database:
 
-                self.helpers.challenge_print(challenge_database, username, chat_id, False)
+                self.helpers.challenge_print(challenge_database, message, chat_id, False)
             else:
                 self.database.challenges_collection.insert_one(challenge_api)
             
-                self.helpers.challenge_print(challenge_api, username, chat_id, False)
+                self.helpers.challenge_print(challenge_api, message, chat_id, False)
             # TODO: проверять длину только у описания
     
-    def send_reminder(self, message: Message):
-        username = message.from_user.username
-        reminders = self.lang("reminders", username)
+    def send_reminder(self, chat_id, message: Message):
+        reminders = self.helpers.lang("reminders", message)
         reminder = random.choice(reminders)
-        self.bot.send_message(message.chat.id, reminder)
+        self.bot.send_message(chat_id, reminder)
+
+    def setup_reminder(self, message):
+        try:
+            user_id = message.from_user.id
+            chat_id = message.chat.id
+            username = message.from_user.username
+            job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
+            
+            # Check if a job with this ID already exists
+            if not self.scheduler.get_job(job_id):
+                self.scheduler.add_job(self.send_reminder, 'interval', seconds=10, args=[chat_id, username], id=job_id, replace_existing=True)
+                
+            if not self.scheduler.running:
+                self.scheduler.start()
+                
+            print("setup_reminder: ", self.scheduler.get_jobs())
+        except Exception as e:
+            print("Error: ", e)
+
+    def shutdown_reminder(self, message):
+        user_id = message.from_user.id
+        job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
         
-    def setup_reminder(self):
-        schedule.every(10).seconds.do(self.send_reminder)
-    
+        # Remove the specific user's reminder job if it exists
+        if self.scheduler.get_job(job_id):
+            self.scheduler.remove_job(job_id)
+            # self.scheduler.shutdown()
+            
+        print("shutdown_reminder: ", self.scheduler.get_jobs())
+        
+    def admin(self, message):
+        self.bot.send_message(message.chat.id, "Only admin can see this message!")
+
     def handle_random_text(self):
-        """эта функция принимает текст от пользователя, формирует slug, и находит такую задачу в кодварсе"""
+        """This function handles random text from the user."""
+        @self.bot.message_handler(commands=['admin'], access_level=['admin'])
+        def send_admin(message):
+            self.admin(message)
+        
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message: Message):
+            # Stop the current reminder before starting a new one
+            self.shutdown_reminder(message)
+            
             if message.text == "Check stats 🏅":
                 self.check_stats_command(message)
                 
@@ -360,8 +403,10 @@ class BotHandlers():
                 username = message.from_user.username
                 bot_message = self.helpers.lang("random_text_reply", message) 
                 self.bot.send_message(message.chat.id, bot_message)
-                
-            Thread(target=self.setup_reminder, daemon=True).start()
+            
+            # Start a new reminder job after handling the user's message
+            self.setup_reminder(message)
+               
         
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
 

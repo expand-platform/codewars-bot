@@ -5,6 +5,9 @@ import os
 import dotenv
 from telebot.types import Message
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.jobstores.mongodb import MongoDBJobStore
+
 class Database:
     def __init__(self):
         # Коннект к базе
@@ -18,6 +21,10 @@ class Database:
         
         self.users_collection: Collection = self.database['users']
         self.challenges_collection: Collection = self.database['challenges']
+        
+        self.scheduler = BackgroundScheduler(jobstores = {
+            'default': MongoDBJobStore(database=database_name, collection="jobs", client=self.client)
+        })
 
     def new_user(self, username: str, cw_login: str, message: Message):
         """Функция создаёт нового юзера, сюда кидаем юзернейм и его уровень (скорее всего уровень будет 0, так как пользователь новый)
@@ -108,3 +115,6 @@ class Database:
         else:
             print(f"Пользователь с именем '{username}' не найден в базе данных.")
             return f"Пользователь с именем '{username}' не найден в базе данных."
+        
+    def get_scheduler(self):
+        return self.scheduler

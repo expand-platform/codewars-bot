@@ -12,7 +12,6 @@ class AccessLevel(telebot.custom_filters.AdvancedCustomFilter):
     @staticmethod
     def check(message: Message, levels):
         print("check2")
-        username = message.from_user.username
-        access_level = Database().get_user_access(username) 
+        access_level = Database().get_user_access(message) 
         print(access_level)
         return access_level in levels

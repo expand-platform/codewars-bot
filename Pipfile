@@ -11,9 +11,9 @@ fastapi = "*"
 watchdog = "*"
 psutil = "*"
 html2text = "*"
-schedule = "*"
 uvicorn = "*"
 python-dotenv = "*"
+apscheduler = "*"
 
 [dev-packages]
 

@@ -38,17 +38,15 @@ class Helpers():
                 else:
                     self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
     
-    def lang(self, message: Message):
+    def lang(self, text: str, message: Message):
         lang = self.database.pull_user_lang(message)
         if lang == "ENG":
-            message = self.eng_language[message]
-            return message
+            reply = self.eng_language[text]
         elif lang == "RUS":
-            message = self.rus_language[message]
-            return message
+            reply = self.rus_language[text] 
         elif lang == "UKR":
-            message = self.ukr_language[message]
-            return message
+            reply = self.ukr_language[text]
+        return reply
 
     def transform_challenge_string(self, message: Message):
         user_input = message.text
