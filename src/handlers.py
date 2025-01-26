@@ -23,6 +23,8 @@ from src.keyboardButtons import keyboard_buttons
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import random
+
+from requests import get
  
 class BotHandlers():
     def __init__(self, bot):
@@ -451,7 +453,7 @@ class BotHandlers():
             )
     
     def send_reminder(self, chat_id, username):
-        reminders = self.lang("reminders", username)
+        reminders = self.helpers.lang("reminders", username)
         reminder = random.choice(reminders)
         self.bot.send_message(chat_id, reminder)
 
@@ -461,7 +463,6 @@ class BotHandlers():
             chat_id = message.chat.id
             username = message.from_user.username
             job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
-            reminders = self.lang("reminders", username)
             
             # Check if a job with this ID already exists
             if not self.scheduler.get_job(job_id):
