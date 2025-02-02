@@ -32,9 +32,6 @@ class Admin():
         @self.bot.message_handler(commands=["load_tasks"], access_level=["admin"], func=lambda message: True) 
         def echo(message: Message):
             """ load tasks from another user, saves them to db """  
-
-            username = message.from_user.username
-            self.helpers.command_use_log("/load_tasks", username, message.chat.id)
             message_format = self.helpers.lang("load_challenges_intro", message)     
 
             bot_message = self.bot.send_message(

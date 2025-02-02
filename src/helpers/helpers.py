@@ -37,6 +37,7 @@ class Helpers():
                     pass
                 else:
                     self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
+            self.database.stat_update(command)
     
     def lang(self, text: str, message: Message):
         lang = self.database.pull_user_lang(message)
