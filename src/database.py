@@ -32,6 +32,27 @@ class Database:
         update2 = {"$set": {"total_users": count_users}}
         self.analytics.update_one({}, update2, upsert=False)
 
+    def show_analytics(self):
+        document = self.analytics.find_one({})
+        # Сообщение прижато к левому краю специально, так нужно
+        message = f"""
+total_users: {document.get("total_users")}
+
+commands:
+
+start: {document.get("/start")}
+check_stats: {document.get("/check_stats")}
+find_task: {document.get("/find_task")}
+random_task: {document.get("/random_task")}
+random_task_and_level: {document.get("/random_task_and_level")}
+story_mode: {document.get("/story_mode")}
+language: {document.get("/language")}
+help: {document.get("/help")}
+reauthorize: {document.get("/reauthorize")}
+            """
+
+        return message
+
     def new_user(self, username: str, cw_login: str, message: Message):
         """Функция создаёт нового юзера, сюда кидаем юзернейм и его уровень (скорее всего уровень будет 0, так как пользователь новый)
         cw = code wars
