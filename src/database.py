@@ -21,7 +21,7 @@ class Database:
         self.analytics: Collection = self.database['analytics']
         
     def stat_update(self, command):
-        # test2
+        # test3
         document = self.analytics.find_one({})
 
         form = document.get(command) + 1
