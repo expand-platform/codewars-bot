@@ -10,7 +10,7 @@ from telebot.util import quick_markup
 from src.messages_eng import MESSAGES_ENG
 from src.messages_ukr import MESSAGES_UKR
 from src.messages_rus import MESSAGES_RUS
-from src.inline_buttons import lvl_buttons, lang_buttons
+from src.inline_buttons import lvl_buttons, lang_buttons, mode_buttons
 from src.helpers.helpers import Helpers
 from src.helpers.Dotenv import Dotenv
 
@@ -201,19 +201,30 @@ class BotHandlers():
         username = message.from_user.username
         
         filter = {"tg_username": username}
-        user = self.database.users_collection.find_one(filter) 
-        
-        if user["story_mode"] == False:
-            update = {"$set": {"story_mode": True}}
-            self.bot.send_message(message.chat.id, self.helpers.lang("story_mode_selection", message))
-            
-        else: 
-            update = {"$set": {"story_mode": False}}
-            
-            
-        self.database.users_collection.update_one(filter, update, upsert=False)
         user = self.database.users_collection.find_one(filter)
+        markup = quick_markup(values=mode_buttons, row_width=1)
+        ask_mode = self.helpers.lang("mode_selection", message)
+        sent_message = self.bot.send_message(message.chat.id, ask_mode, reply_markup=markup)
         
+        @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
+        def mode_choice_callback(call: CallbackQuery):
+            mode = call.data
+            username = call.from_user.username
+            
+            if mode == "STORY":
+                update = {"$set": {"story_mode": True}}
+                bot_message = self.helpers.lang("story_mode_selected", message)
+                print(user['story_mode'])
+            else:
+                update = {"$set": {"story_mode": False}}
+                bot_message = self.helpers.lang("normal_mode_selected", message)
+                print(user['story_mode'])
+                
+            self.database.users_collection.update_one(filter, update, upsert=False)
+            self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
+            
+            self.bot.delete_message(call.message.chat.id, sent_message.message_id)
+            self.bot.send_message(call.message.chat.id, bot_message)
         
         return user["story_mode"]
         

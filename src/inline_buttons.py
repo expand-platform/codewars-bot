@@ -22,3 +22,8 @@ lang_buttons = {
     "Русский": {"callback_data": "RUS"},
     "Українська": {"callback_data": "UKR"}
 }
+
+mode_buttons = {
+    "Story Mode": {"callback_data": "STORY"},
+    "Normal Mode": {"callback_data": "NORMAL"},
+}

@@ -42,8 +42,7 @@ MESSAGES_ENG = {
         "Daily practice makes perfect! 🎯 Start solving a Codewars challenge now! ⚡",
         "A quick Codewars kata a day keeps the bugs away! 🐛💻 Get started now!"
     ],
-    "story_mode_selection": "Would you wish to continue in survival mode (no limits, almost like zombie apocalypse 🧟‍♀️) or would you like to try story mode (interesting adventure which will improve your level of humour (plss...))?",
+    "mode_selection": "Would you like to continue in Normal Mode — no limits, full chaos, almost like a zombie apocalypse 🧟‍♀️ — or switch to Story Mode, an interactive adventure designed to sharpen your wit and sense of humor?",
     "story_mode_selected": "You've selected story mode. Let's start the adventure! 🚀",
     "normal_mode_selected": "You've selected normal mode. Let's practice! 🚀",
-    
 }
