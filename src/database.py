@@ -17,6 +17,8 @@ class Database:
         self.database = self.client[database_name]
         
         self.users_collection: Collection = self.database['users']
+
+
         self.challenges_collection: Collection = self.database['challenges']
         self.analytics: Collection = self.database['analytics']
         
@@ -60,9 +62,12 @@ reauthorize: {document.get("/reauthorize")}
         chat_id = message.chat.id
         user_id = message.from_user.id
         user_id_filter = {"user_id": user_id}
+
         user = self.users_collection.find_one(user_id_filter)
+
         if user:
             print(f"Пользователь с чат айди {chat_id} уже существует.")
+
         else:
             document = {"tg_username": username, 
                         "chat_id": chat_id, 
@@ -97,7 +102,7 @@ reauthorize: {document.get("/reauthorize")}
         username = message.from_user.username
         filter = {"user_id": user_id}
         user = self.users_collection.find_one(filter) 
-        print("🐍 File: src/database.py | Line: 67 | pull_user_lang ~ user",user)
+
 
         # Проверка, найден ли пользователь
         if user:
