@@ -30,6 +30,7 @@ class Helpers():
         self.bot: TeleBot = bot
 
     def command_use_log(self, command, tg_user, chat_id):
+        # test comment
         env = Dotenv().environment
         if chat_id not in self.admin_ids:
             self.database.stat_update(command)
