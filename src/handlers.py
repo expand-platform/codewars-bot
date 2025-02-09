@@ -7,9 +7,9 @@ from telebot import types, TeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
 
-from src.messages_eng import MESSAGES_ENG
-from src.messages_ukr import MESSAGES_UKR
-from src.messages_rus import MESSAGES_RUS
+from src.messages.en import MESSAGES_ENG
+from src.messages.ukr import MESSAGES_UKR
+from src.messages.ru import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons, mode_buttons
 from src.helpers.helpers import Helpers
 from src.helpers.Dotenv import Dotenv

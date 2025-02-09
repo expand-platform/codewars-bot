@@ -6,9 +6,9 @@ import html2text
 from telebot import TeleBot
 from telebot.types import Message
 
-from src.messages_eng import MESSAGES_ENG
-from src.messages_ukr import MESSAGES_UKR
-from src.messages_rus import MESSAGES_RUS
+from src.messages.en import MESSAGES_ENG
+from src.messages.ukr import MESSAGES_UKR
+from src.messages.ru import MESSAGES_RUS
 
 from src.database import Database
 from src.helpers.Dotenv import Dotenv
@@ -30,14 +30,15 @@ class Helpers():
         self.bot: TeleBot = bot
 
     def command_use_log(self, command, tg_user, chat_id):
-        env = os.getenv("ENVIRONMENT") 
+        env = Dotenv().environment
+        if chat_id not in self.admin_ids:
+            self.database.stat_update(command)
         if env == "PRODUCTION":
             for value in self.admin_ids: 
-                if str(chat_id) == str(value):
-                    pass
-                else:
+                print("value:", value)
+                if str(chat_id) != str(value):
                     self.bot.send_message(value, f"Пользователь @{tg_user} перешёл в раздел {command}")
-            self.database.stat_update(command)
+               
     
     def lang(self, text: str, message: Message):
         lang = self.database.pull_user_lang(message)

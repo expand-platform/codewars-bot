@@ -1,15 +1,13 @@
 from typing import Union
 from pymongo import MongoClient
 from pymongo.collection import Collection
-import os
-import dotenv
+from src.helpers.Dotenv import Dotenv
 from telebot.types import Message
 
 class Database:
     def __init__(self):
         # Коннект к базе
-        dotenv.load_dotenv()
-        connect = os.getenv("MONGO_CONNECT")
+        connect = Dotenv().mongodb_string
         self.client = MongoClient(connect)
 
         database_name = "codewars_bot"
@@ -17,6 +15,8 @@ class Database:
         self.database = self.client[database_name]
         
         self.users_collection: Collection = self.database['users']
+
+
         self.challenges_collection: Collection = self.database['challenges']
         self.analytics: Collection = self.database['analytics']
         
@@ -60,9 +60,12 @@ reauthorize: {document.get("/reauthorize")}
         chat_id = message.chat.id
         user_id = message.from_user.id
         user_id_filter = {"user_id": user_id}
+
         user = self.users_collection.find_one(user_id_filter)
+
         if user:
             print(f"Пользователь с чат айди {chat_id} уже существует.")
+
         else:
             document = {"tg_username": username, 
                         "chat_id": chat_id, 
@@ -97,6 +100,7 @@ reauthorize: {document.get("/reauthorize")}
         username = message.from_user.username
         filter = {"user_id": user_id}
         user = self.users_collection.find_one(filter) 
+
 
         # Проверка, найден ли пользователь
         if user:
