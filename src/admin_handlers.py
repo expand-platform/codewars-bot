@@ -19,22 +19,26 @@ class Admin():
     
     def start_admin_handlers(self):
         self.admin_commands_start()
+        self.show_bot_analytics()
         self.load_tasks_command()
 
 
     def admin_commands_start(self):
         @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
         def admin(message: Message):
-            self.bot.send_message(message.chat.id, f"Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks")
+            self.bot.send_message(message.chat.id, f"Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks\n/show_analytics")
             
+    def show_bot_analytics(self):
+        @self.bot.message_handler(commands=["show_analytics"], access_level=["admin"]) 
+        def echo(message: Message):
+            document = self.database.show_analytics()
+            
+            self.bot.send_message(message.chat.id, document)
 
     def load_tasks_command(self):
         @self.bot.message_handler(commands=["load_tasks"], access_level=["admin"], func=lambda message: True) 
         def echo(message: Message):
             """ load tasks from another user, saves them to db """  
-
-            username = message.from_user.username
-            self.helpers.command_use_log("/load_tasks", username, message.chat.id)
             message_format = self.helpers.lang("load_challenges_intro", message)     
 
             bot_message = self.bot.send_message(

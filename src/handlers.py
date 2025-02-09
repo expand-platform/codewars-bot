@@ -69,7 +69,7 @@ class BotHandlers():
     def lang_change(self, message: Message):
 
         username = message.from_user.username
-        self.helpers.command_use_log("/language_change", username, message.chat.id)
+        # self.helpers.command_use_log("/language_change", username, message.chat.id)
         markup = quick_markup(values=lang_buttons, row_width=1)
         ask_lang_message = self.helpers.lang("change_language", message)
         sent_message = self.bot.send_message(message.chat.id, ask_lang_message, reply_markup=markup)
@@ -124,7 +124,7 @@ class BotHandlers():
         username = message.from_user.username
         img_path = "src/images/nickname_example.png"
         normalised_img_path = os.path.normpath(img_path)
-        self.helpers.command_use_log("/authorize", username, message.chat.id)
+        # self.helpers.command_use_log("/authorize", username, message.chat.id)
         
         markup =  InlineKeyboardMarkup()
         cw_signin_page_button = InlineKeyboardButton(self.helpers.lang("codewars_signin_button", message), url="https://www.codewars.com/users/sign_in")
@@ -179,7 +179,7 @@ class BotHandlers():
         
     def check_stats_command(self, message: Message): 
             username = message.from_user.username
-            self.helpers.command_use_log("/check_stats", username, message.chat.id)
+            # self.helpers.command_use_log("/check_stats", username, message.chat.id)
             
             filter = {"tg_username": username}
             user = self.database.users_collection.find_one(filter)
@@ -237,7 +237,7 @@ class BotHandlers():
             # остальной код
             
             self.bot.send_dice(message.chat.id, emoji="🎲")
-            self.helpers.command_use_log("/random_level_and_task", username, message.chat.id)
+            # self.helpers.command_use_log("/random_level_and_task", username, message.chat.id)
             
             challenges = list(self.database.challenges_collection.find({}))
             random_task = random.choice(challenges)
@@ -252,7 +252,7 @@ class BotHandlers():
 
         # Отправляем сообщение с кнопками
         sent_message = self.bot.send_message(message.chat.id, bot_message, reply_markup=markup)
-        self.helpers.command_use_log("/random_task", username, message.chat.id)
+        # self.helpers.command_use_log("/random_task", username, message.chat.id)
 
         """Случайная задача из коллекции"""
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
@@ -301,7 +301,7 @@ class BotHandlers():
             text=message_format, 
             parse_mode=self.parse_mode
         )
-        self.helpers.command_use_log("/find_task", username, message.chat.id) 
+        # self.helpers.command_use_log("/find_task", username, message.chat.id) 
         self.bot.register_next_step_handler(message=bot_message, callback=self.find_task_response)
         
     def find_task_response(self, message: Message):
@@ -330,7 +330,7 @@ class BotHandlers():
         reminder = random.choice(reminders)
         self.bot.send_message(chat_id, reminder)
 
-    def setup_reminder(self, message):
+    def setup_reminder(self, message: Message):
         try:
             user_id = message.from_user.id
             chat_id = message.chat.id
@@ -348,7 +348,7 @@ class BotHandlers():
         except Exception as e:
             print("Error: ", e)
 
-    def shutdown_reminder(self, message):
+    def shutdown_reminder(self, message: Message):
         user_id = message.from_user.id
         job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
         
@@ -358,47 +358,48 @@ class BotHandlers():
             # self.scheduler.shutdown()
             
         print("shutdown_reminder: ", self.scheduler.get_jobs())
-        
-    def admin(self, message):
-        self.bot.send_message(message.chat.id, "Only admin can see this message!")
 
     def handle_random_text(self):
         """This function handles random text from the user."""
-        @self.bot.message_handler(commands=['admin'], access_level=['admin'])
-        def send_admin(message):
-            self.admin(message)
         
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message: Message):
             # Stop the current reminder before starting a new one
             # self.shutdown_reminder(message)
-            
+            username = message.from_user.username
+            chat_id = message.from_user.id
             if message.text == "Check stats 🏅":
                 self.check_stats_command(message)
+                self.helpers.command_use_log("/check_stats", username, chat_id)
                 
             elif message.text == "Random task 🥋":
                 self.random_task_command(message)
+                self.helpers.command_use_log("/random_task", username, chat_id)
             
             elif message.text == "Find task 🔍":
                 self.find_task_command(message)
+                self.helpers.command_use_log("/find_task", username, chat_id)
             
             elif message.text == "Story mode 🏕":
                 self.story_mode(message)
+                self.helpers.command_use_log("/story_mode", username, chat_id)
                 
             elif message.text == "Random task and lvl 🎲":
                 self.random_level_and_task(message)
+                self.helpers.command_use_log("/random_task_and_level", username, chat_id)
             
             elif message.text == "Language 🌐":
                 self.lang_change(message)
+                self.helpers.command_use_log("/language", username, chat_id)
         
             elif message.text == "Help ❔":
-                username = message.from_user.username
-                self.helpers.command_use_log("/help", username, message.chat.id)
                 bot_message = self.helpers.lang("help", message)  
-                self.bot.send_message(message.chat.id, bot_message)
+                self.bot.send_message(chat_id, bot_message)
+                self.helpers.command_use_log("/help", username, chat_id)
                 
             elif message.text == "Reauthorize ⚙":
                 self.authorization(message)
+                self.helpers.command_use_log("/reauthorize", username, chat_id)
             
             else:
                 username = message.from_user.username
