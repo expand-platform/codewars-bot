@@ -205,12 +205,15 @@ class BotHandlers():
         
         if user["story_mode"] == False:
             update = {"$set": {"story_mode": True}}
+            self.bot.send_message(message.chat.id, self.helpers.lang("story_mode_selection", message))
             
         else: 
             update = {"$set": {"story_mode": False}}
             
+            
         self.database.users_collection.update_one(filter, update, upsert=False)
         user = self.database.users_collection.find_one(filter)
+        
         
         return user["story_mode"]
         
