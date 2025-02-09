@@ -333,7 +333,7 @@ class BotHandlers():
         reminder = random.choice(reminders)
         self.bot.send_message(chat_id, reminder)
 
-    def setup_reminder(self, message):
+    def setup_reminder(self, message: Message):
         try:
             user_id = message.from_user.id
             chat_id = message.chat.id
@@ -351,7 +351,7 @@ class BotHandlers():
         except Exception as e:
             print("Error: ", e)
 
-    def shutdown_reminder(self, message):
+    def shutdown_reminder(self, message: Message):
         user_id = message.from_user.id
         job_id = f"reminder_{user_id}"  # Create a unique job ID for the user
         
@@ -361,15 +361,9 @@ class BotHandlers():
             # self.scheduler.shutdown()
             
         print("shutdown_reminder: ", self.scheduler.get_jobs())
-        
-    def admin(self, message):
-        self.bot.send_message(message.chat.id, "Only admin can see this message!")
 
     def handle_random_text(self):
         """This function handles random text from the user."""
-        @self.bot.message_handler(commands=['admin'], access_level=['admin'])
-        def send_admin(message):
-            self.admin(message)
         
         @self.bot.message_handler(func=lambda message: True)
         def handle_text(message: Message):
