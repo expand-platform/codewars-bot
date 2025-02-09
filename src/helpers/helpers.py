@@ -6,9 +6,9 @@ import html2text
 from telebot import TeleBot
 from telebot.types import Message
 
-from src.messages_eng import MESSAGES_ENG
-from src.messages_ukr import MESSAGES_UKR
-from src.messages_rus import MESSAGES_RUS
+from src.messages.en import MESSAGES_ENG
+from src.messages.ukr import MESSAGES_UKR
+from src.messages.ru import MESSAGES_RUS
 
 from src.database import Database
 from src.helpers.Dotenv import Dotenv

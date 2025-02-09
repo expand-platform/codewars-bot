@@ -64,6 +64,7 @@ class Database:
         username = message.from_user.username
         filter = {"user_id": user_id}
         user = self.users_collection.find_one(filter) 
+        print("🐍 File: src/database.py | Line: 67 | pull_user_lang ~ user",user)
 
         # Проверка, найден ли пользователь
         if user:

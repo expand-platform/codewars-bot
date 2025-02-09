@@ -28,7 +28,7 @@ class Admins():
             },
         ]
 
-    # ! Пожалуйста, протестируйте, работает ли try-except
+
     def notify_admins(self, selected_admins: list[str], message: str):
         for admin_name in selected_admins:
             for admin in self.admins:
