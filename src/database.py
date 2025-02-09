@@ -59,10 +59,10 @@ reauthorize: {document.get("/reauthorize")}
         """
         chat_id = message.chat.id
         user_id = message.from_user.id
-        tguser_filter = {"tg_username": username}
-        user = self.users_collection.find_one(tguser_filter)
+        user_id_filter = {"user_id": user_id}
+        user = self.users_collection.find_one(user_id_filter)
         if user:
-            print(f"Пользователь с юзернеймом {username} уже существует.")
+            print(f"Пользователь с чат айди {chat_id} уже существует.")
         else:
             document = {"tg_username": username, 
                         "chat_id": chat_id, 
