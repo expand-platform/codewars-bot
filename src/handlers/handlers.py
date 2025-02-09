@@ -16,7 +16,7 @@ from src.helpers.Dotenv import Dotenv
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
-from src.admin_handlers import Admin
+from src.handlers.admin_handlers import Admin
 
 from src.keyboardButtons import keyboard_buttons
 
