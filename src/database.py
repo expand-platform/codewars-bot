@@ -1,15 +1,13 @@
 from typing import Union
 from pymongo import MongoClient
 from pymongo.collection import Collection
-import os
-import dotenv
+from src.helpers.Dotenv import Dotenv
 from telebot.types import Message
 
 class Database:
     def __init__(self):
         # Коннект к базе
-        dotenv.load_dotenv()
-        connect = os.getenv("MONGO_CONNECT")
+        connect = Dotenv().mongodb_string
         self.client = MongoClient(connect)
 
         database_name = "codewars_bot"
