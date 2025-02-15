@@ -13,7 +13,6 @@ from src.messages.ru import MESSAGES_RUS
 from src.database import Database
 from src.helpers.Dotenv import Dotenv
 
-
 """обрабатываем сообщение пользователя и формирует slug"""
 class Helpers():
     def __init__(self, bot):
@@ -32,9 +31,11 @@ class Helpers():
     def command_use_log(self, command, tg_user, chat_id):
         # test comment
         env = Dotenv().environment
-        if chat_id not in self.admin_ids:
-            self.database.stat_update(command)
+        # if chat_id not in self.admin_ids:
+        self.database.stat_update(command)
+
         if env == "PRODUCTION":
+
             for value in self.admin_ids: 
                 print("value:", value)
                 if str(chat_id) != str(value):

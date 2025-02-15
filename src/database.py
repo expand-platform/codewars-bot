@@ -3,6 +3,10 @@ from pymongo import MongoClient
 from pymongo.collection import Collection
 from src.helpers.Dotenv import Dotenv
 from telebot.types import Message
+from bson import ObjectId
+from datetime import datetime, timezone
+from dateutil.relativedelta import relativedelta
+from threading import Timer
 
 class Database:
     def __init__(self):
@@ -20,17 +24,42 @@ class Database:
         self.challenges_collection: Collection = self.database['challenges']
         self.analytics: Collection = self.database['analytics']
         
+    def date_to_date_analystics(self):
+        doc_id = "67ae1e0b83699d5a8115cfc0"
+        document = self.analytics.find_one({"_id": ObjectId(doc_id)})
+        current_date = datetime.now(timezone.utc)
+        month_before = current_date - relativedelta(month=1)
+        update = {"$set": {"starting_date": month_before}}
+        
+        self.analytics.update_one({"_id": ObjectId(doc_id)}, update)
+        Timer(10, self.date_to_date_analystics).start()
+
+
+        
+
+
+        print("CURRENT: ", current_date, " MONTH BEFORE: ", month_before)
+        
+
+        
+
+
     def stat_update(self, command):
-        # test3
-        document = self.analytics.find_one({})
+        self.date_to_date_analystics()
 
-        form = document.get(command) + 1
-        update1 = {"$set": {command: form}}
-        self.analytics.update_one({}, update1, upsert=False)
+        doc_id = "679f4042d631b228c70a5faf" 
+        document = self.analytics.find_one({"_id": ObjectId(doc_id)}) # getting analytics document from database
 
-        count_users = self.users_collection.count_documents({})
-        update2 = {"$set": {"total_users": count_users}}
-        self.analytics.update_one({}, update2, upsert=False)
+
+        form = document.get(command) + 1 # finding the used command in the document and adding 1 as user used it
+        update1 = {"$set": {command: form}} # variable to update data
+        self.analytics.update_one({}, update1, upsert=False) # updating the command in the file
+
+        count_users = self.users_collection.count_documents({}) # counts how many documents there are in an user collection in database
+        update2 = {"$set": {"total_users": count_users}} # variable to update the number of users (just rewrites it, doesn't neccessary mean it's gonna add user or smth)
+        self.analytics.update_one({}, update2, upsert=False) # updating data in database
+
+
 
     def show_analytics(self):
         document = self.analytics.find_one({})
