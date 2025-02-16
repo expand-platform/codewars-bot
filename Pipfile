@@ -14,6 +14,7 @@ html2text = "*"
 uvicorn = "*"
 python-dotenv = "*"
 apscheduler = "*"
+python-dateutil = "*"
 
 [dev-packages]
 

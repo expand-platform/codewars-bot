@@ -1,16 +1,19 @@
 import os
 from dotenv import load_dotenv
+from threading import Timer
 
 from telebot import TeleBot, ExceptionHandler
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.helpers.Dotenv import Dotenv
 from src.helpers.Admin import Admins  
-from src.admin_handlers import Admin
-from src.handlers import BotHandlers
+from src.handlers.admin_handlers import Admin
+from src.handlers.handlers import BotHandlers
 from src.helpers.filters import ExceptionHandler, AccessLevel
+from src.database import Database
 
 from src.bot_commands import commands
+
 
 
 
@@ -27,6 +30,7 @@ class Bot:
         
         self.handlers = BotHandlers(self.bot)
         self.admin_handlers = Admin(self.bot)
+        self.datebase = Database()
 
         #? helpers
         self.admins = Admins(self.bot)
@@ -43,7 +47,8 @@ class Bot:
     def startBot(self):
         """ set up hanlders, starts bot polling """
         print("Bot started")
-         
+
+        self.datebase.date_to_date_analystics()
         self.setup_command_menu()
         self.admin_handlers.start_admin_handlers()
         self.handlers.start_handlers()
