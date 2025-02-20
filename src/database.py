@@ -42,6 +42,7 @@ class Database:
         }
 
         self.monthly_analytics.insert_one(document)
+        self.monthly_analytics_creation_date = full_date
 
         print("Monthly document has been created")
 
@@ -51,15 +52,17 @@ class Database:
         document = self.total_analytics.find_one({"_id": ObjectId(doc_id)}) 
 
         # monthly analytics
-        full_date = datetime.now().strftime("%Y-%m-%d")
-        full_date_filter = {"full_date": full_date}
-        # document_ma = self.monthly_analytics.find_one(full_date_filter)
+        document_ma = self.monthly_analytics.find_one(sort=[("created_at", -1)])
+        form_ma = document_ma.get(command) + 1
+        update_ma = {"$set": {command: form_ma}} 
+        self.monthly_analytics.update_one(document_ma, update_ma, upsert=False) # monthly analytics update
+
+
 
 
         form = document.get(command) + 1 
         update1 = {"$set": {command: form}} 
         self.total_analytics.update_one({}, update1, upsert=False) 
-        self.monthly_analytics.update_one(full_date_filter, update1, upsert=False) # monthly analytics update
 
         count_users = self.users_collection.count_documents({}) # counts how many documents there are in an user collection in database
         update2 = {"$set": {"total_users": count_users}} # variable to update the number of users (just rewrites it, doesn't neccessary mean it's gonna add user or smth)
