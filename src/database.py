@@ -32,13 +32,13 @@ class Database:
         update = {"$set": {"starting_date": month_before}}
         
         self.analytics.update_one({"_id": ObjectId(doc_id)}, update)
-        Timer(10, self.date_to_date_analystics).start()
+        # Timer(10, self.date_to_date_analystics).start()
 
 
         
 
 
-        print("CURRENT: ", current_date, " MONTH BEFORE: ", month_before)
+        # print("CURRENT: ", current_date, " MONTH BEFORE: ", month_before)
         
 
         
