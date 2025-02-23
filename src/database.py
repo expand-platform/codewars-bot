@@ -38,7 +38,7 @@ class Database:
         
 
 
-        print("CURRENT: ", current_date, " MONTH BEFORE: ", month_before)
+        # print("CURRENT: ", current_date, " MONTH BEFORE: ", month_before)
         
 
         

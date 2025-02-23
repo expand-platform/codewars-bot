@@ -2,6 +2,9 @@ import telebot
 from telebot.types import Message
 from src.database import Database
 
+from telebot.states import State, StatesGroup
+
+
 class ExceptionHandler(telebot.ExceptionHandler):
     def handle(self, exception):
         print("Exception occured: ", exception)
@@ -15,3 +18,6 @@ class AccessLevel(telebot.custom_filters.AdvancedCustomFilter):
         access_level = Database().get_user_access(message) 
         print(access_level)
         return access_level in levels
+    
+class StoryModeState(StatesGroup):
+    active = State()

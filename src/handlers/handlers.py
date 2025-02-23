@@ -6,6 +6,7 @@ from apscheduler.jobstores.memory import MemoryJobStore
 from telebot import types, TeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
+from telebot.states.sync.context import StateContext
 
 from src.messages.en import MESSAGES_ENG
 from src.messages.ukr import MESSAGES_UKR
@@ -13,10 +14,12 @@ from src.messages.ru import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons, mode_buttons
 from src.helpers.helpers import Helpers
 from src.helpers.Dotenv import Dotenv
+from src.helpers.filters import StoryModeState
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
 from src.handlers.admin_handlers import Admin
+from src.handlers.story_mode import StoryMode
 
 from src.keyboardButtons import keyboard_buttons
 
@@ -41,7 +44,7 @@ class BotHandlers():
         self.codewars_api = Codewars_Challenges()
         self.helpers = Helpers(self.bot)
         self.admin_handlers = Admin(self.bot)
-
+        
         self.scheduler = BackgroundScheduler(
             jobstores = {
                 'default': MemoryJobStore()
@@ -179,7 +182,7 @@ class BotHandlers():
         
     def check_stats_command(self, message: Message): 
             username = message.from_user.username
-            # self.helpers.command_use_log("/check_stats", username, message.chat.id)
+            self.helpers.command_use_log("/check_stats", username, message.chat.id)
             
             filter = {"tg_username": username}
             user = self.database.users_collection.find_one(filter)
@@ -209,22 +212,29 @@ class BotHandlers():
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def mode_choice_callback(call: CallbackQuery):
             mode = call.data
-            username = call.from_user.username
+            print("🐍 File: handlers/handlers.py | Line: 215 | mode_choice_callback ~ mode",mode)
+            uid = call.from_user.id
+            markup_buttons = None
             
             if mode == "STORY":
+                self.bot.set_state(uid, StoryModeState.active)
+                print("\nSTORY CHOICE: ", self.bot.get_state(uid))
+                markup_buttons = StoryMode(self.bot).create_keyboard()
                 update = {"$set": {"story_mode": True}}
                 bot_message = self.helpers.lang("story_mode_selected", message)
-                print(user['story_mode'])
+                
             else:
+                self.bot.delete_state(uid)
+                print("\nNORMAL CHOICE: ", self.bot.get_state(uid))
                 update = {"$set": {"story_mode": False}}
+                markup_buttons = self.create_keyboard()
                 bot_message = self.helpers.lang("normal_mode_selected", message)
-                print(user['story_mode'])
                 
             self.database.users_collection.update_one(filter, update, upsert=False)
             self.bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=None)
             
             self.bot.delete_message(call.message.chat.id, sent_message.message_id)
-            self.bot.send_message(call.message.chat.id, bot_message)
+            self.bot.send_message(call.message.chat.id, bot_message, reply_markup=markup_buttons)
         
         return user["story_mode"]
         
@@ -382,6 +392,10 @@ class BotHandlers():
             # self.shutdown_reminder(message)
             username = message.from_user.username
             chat_id = message.from_user.id
+            
+            if message.text == "Normal Mode":
+                print("NORMAL MODE")    
+            
             if message.text == "Check stats 🏅":
                 self.check_stats_command(message)
                 self.helpers.command_use_log("/check_stats", username, chat_id)

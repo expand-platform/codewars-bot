@@ -10,3 +10,9 @@ keyboard_buttons = {
     "help": types.KeyboardButton("Help ❔"),
     "language": types.KeyboardButton("Language 🌐")
 }
+
+story_mode_buttons = {
+    "receive_task": types.KeyboardButton("Receive Mission"),
+    "check_level": types.KeyboardButton("Check Level"),
+    "normal_mode": types.KeyboardButton("Normal Mode"),
+}
