@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 
 from telebot import TeleBot, ExceptionHandler
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
-from telebot.storage import StateMemoryStorage
 
 
 from src.helpers.Dotenv import Dotenv
@@ -20,7 +19,6 @@ from src.handlers.story_mode import StoryMode
 from src.bot_commands import commands
 
 
-state_storage = StateMemoryStorage()
 
 
 
@@ -31,7 +29,7 @@ class Bot:
         self.timezone = "UTC"
         
         self.bot_token = Dotenv().bot_token
-        self.bot = TeleBot(self.bot_token, exception_handler=ExceptionHandler(), state_storage=state_storage)
+        self.bot = TeleBot(self.bot_token, exception_handler=ExceptionHandler())
         
         self.commands = commands
         self.scheduler = BackgroundScheduler()
@@ -63,8 +61,8 @@ class Bot:
 
         self.setup_command_menu()
         self.admin_handlers.start_admin_handlers()
-        self.story_mode.handle_text()
         self.handlers.start_handlers()
+        self.story_mode.handle_text()
         
          
         env = os.getenv("ENVIRONMENT")   

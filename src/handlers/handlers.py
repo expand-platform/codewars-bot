@@ -6,7 +6,6 @@ from apscheduler.jobstores.memory import MemoryJobStore
 from telebot import types, TeleBot
 from telebot.types import Message, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
 from telebot.util import quick_markup
-from telebot.states.sync.context import StateContext
 
 from src.messages.en import MESSAGES_ENG
 from src.messages.ukr import MESSAGES_UKR
@@ -14,14 +13,13 @@ from src.messages.ru import MESSAGES_RUS
 from src.inline_buttons import lvl_buttons, lang_buttons, mode_buttons
 from src.helpers.helpers import Helpers
 from src.helpers.Dotenv import Dotenv
-from src.helpers.filters import StoryModeState
+from src.helpers.keyboards import normal_mode_keyboard, story_mode_keyboard
 
 from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
 from src.handlers.admin_handlers import Admin
-from src.handlers.story_mode import StoryMode
 
-from src.keyboardButtons import keyboard_buttons
+# from src.keyboardButtons import keyboard_buttons
 
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -51,7 +49,7 @@ class BotHandlers():
             }
         )
 
-        self.keyboard_buttons = keyboard_buttons
+        # self.keyboard_buttons = keyboard_buttons
         
         self.markup = None
         
@@ -59,16 +57,6 @@ class BotHandlers():
         self.start_command()
         self.handle_random_text() 
         
-    def create_keyboard(self):
-        # * КОГДА ДОБАВЛЯЕТЕ НОВУЮ КОММАНДУ В KEYBOARDBUTTON СТАРАЙТЕСЬ РАВНОМЕРНО ДЕЛАТЬ (ОДНА СТРОЧКА С MARKUP.ADD ЭТО ОДНА ГОРИЗОНТАЛЬНАЯ ГРУПА)
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True) 
-        
-        markup.add(self.keyboard_buttons["random_task"], self.keyboard_buttons["check_stats"])
-        markup.add(self.keyboard_buttons["random_lvltask"], self.keyboard_buttons["find_task"], self.keyboard_buttons["story_mode"])
-        markup.add(self.keyboard_buttons["authorize"], self.keyboard_buttons["language"], self.keyboard_buttons["help"])
-        
-        return markup                   
-
     def lang_change(self, message: Message):
 
         username = message.from_user.username
@@ -100,7 +88,7 @@ class BotHandlers():
                 self.authorization(message)
 
     def start(self, message: Message):
-            markup = self.create_keyboard()
+            markup = normal_mode_keyboard()
             
             username = message.from_user.username
 
@@ -200,7 +188,7 @@ class BotHandlers():
             bot_message = self.helpers.lang("check_stats_error", message)
             self.bot.reply_to(message, bot_message)
 
-    def story_mode(self, message: Message):
+    def change_mode(self, message: Message):
         username = message.from_user.username
         
         filter = {"tg_username": username}
@@ -212,22 +200,16 @@ class BotHandlers():
         @self.bot.callback_query_handler(func=lambda call: call.message.message_id == sent_message.message_id)
         def mode_choice_callback(call: CallbackQuery):
             mode = call.data
-            print("🐍 File: handlers/handlers.py | Line: 215 | mode_choice_callback ~ mode",mode)
-            uid = call.from_user.id
             markup_buttons = None
             
             if mode == "STORY":
-                self.bot.set_state(uid, StoryModeState.active)
-                print("\nSTORY CHOICE: ", self.bot.get_state(uid))
-                markup_buttons = StoryMode(self.bot).create_keyboard()
+                markup_buttons = story_mode_keyboard()
                 update = {"$set": {"story_mode": True}}
                 bot_message = self.helpers.lang("story_mode_selected", message)
                 
             else:
-                self.bot.delete_state(uid)
-                print("\nNORMAL CHOICE: ", self.bot.get_state(uid))
                 update = {"$set": {"story_mode": False}}
-                markup_buttons = self.create_keyboard()
+                markup_buttons = normal_mode_keyboard()
                 bot_message = self.helpers.lang("normal_mode_selected", message)
                 
             self.database.users_collection.update_one(filter, update, upsert=False)
@@ -385,57 +367,50 @@ class BotHandlers():
 
     def handle_random_text(self):
         """This function handles random text from the user."""
-        
-        @self.bot.message_handler(func=lambda message: True)
-        def handle_text(message: Message):
-            # Stop the current reminder before starting a new one
-            # self.shutdown_reminder(message)
-            username = message.from_user.username
-            chat_id = message.from_user.id
+
+        @self.bot.message_handler(func=lambda message: message.text == "Check stats 🏅")
+        def check_stats(message):
+            self.check_stats_command(message)
+            self.helpers.command_use_log("/check_stats", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Random task 🥋")
+        def random_task(message):
+            self.random_task_command(message)
+            self.helpers.command_use_log("/random_task", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Find task 🔍")
+        def find_task(message):
+            self.find_task_command(message)
+            self.helpers.command_use_log("/find_task", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Change mode 🔄")
+        def story_mode(message):
+            self.change_mode(message)
+            self.helpers.command_use_log("/story_mode", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Random task and lvl 🎲")
+        def random_task_and_lvl(message):
+            self.random_level_and_task(message)
+            self.helpers.command_use_log("/random_task_and_level", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Language 🌐")
+        def change_language(message):
+            self.lang_change(message)
+            self.helpers.command_use_log("/language", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Help ❔")
+        def help_command(message):
+            bot_message = self.helpers.lang("help", message)
+            self.bot.send_message(message.chat.id, bot_message)
+            self.helpers.command_use_log("/help", message.from_user.username, message.from_user.id)
+
+        @self.bot.message_handler(func=lambda message: message.text == "Reauthorize ⚙")
+        def reauthorize(message):
+            self.authorization(message)
+            self.helpers.command_use_log("/reauthorize", message.from_user.username, message.from_user.id)
             
-            if message.text == "Normal Mode":
-                print("NORMAL MODE")    
-            
-            if message.text == "Check stats 🏅":
-                self.check_stats_command(message)
-                self.helpers.command_use_log("/check_stats", username, chat_id)
-                
-            elif message.text == "Random task 🥋":
-                self.random_task_command(message)
-                self.helpers.command_use_log("/random_task", username, chat_id)
-            
-            elif message.text == "Find task 🔍":
-                self.find_task_command(message)
-                self.helpers.command_use_log("/find_task", username, chat_id)
-            
-            elif message.text == "Story mode 🏕":
-                self.story_mode(message)
-                self.helpers.command_use_log("/story_mode", username, chat_id)
-                
-            elif message.text == "Random task and lvl 🎲":
-                self.random_level_and_task(message)
-                self.helpers.command_use_log("/random_task_and_level", username, chat_id)
-            
-            elif message.text == "Language 🌐":
-                self.lang_change(message)
-                self.helpers.command_use_log("/language", username, chat_id)
-        
-            elif message.text == "Help ❔":
-                bot_message = self.helpers.lang("help", message)  
-                self.bot.send_message(chat_id, bot_message)
-                self.helpers.command_use_log("/help", username, chat_id)
-                
-            elif message.text == "Reauthorize ⚙":
-                self.authorization(message)
-                self.helpers.command_use_log("/reauthorize", username, chat_id)
-            
-            else:
-                username = message.from_user.username
-                bot_message = self.helpers.lang("random_text_reply", message) 
-                self.bot.send_message(message.chat.id, bot_message)
-            
-            # Start a new reminder job after handling the user's message
-            # self.setup_reminder(message)
+        # Start a new reminder job after handling the user's message
+        # self.setup_reminder(message)
                
         
     # сделать так, чтобы при отправке абракадабры от пользователя - он получал рандомную цитату из массива, чтобы читал побольше и не писал хуйню боту
