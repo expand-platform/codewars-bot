@@ -1,6 +1,8 @@
 import os
+import time
+from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
-from threading import Timer
+
 
 from telebot import TeleBot, ExceptionHandler
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
@@ -26,11 +28,14 @@ class Bot:
     def __init__(self) -> None:
         load_dotenv()
         self.parse_mode = "Markdown"
+        self.timezone = "UTC"
         
         self.bot_token = Dotenv().bot_token
         self.bot = TeleBot(self.bot_token, exception_handler=ExceptionHandler(), state_storage=state_storage)
         
         self.commands = commands
+        self.scheduler = BackgroundScheduler()
+
         
         self.handlers = BotHandlers(self.bot)
         self.admin_handlers = Admin(self.bot)
@@ -53,7 +58,9 @@ class Bot:
         """ set up hanlders, starts bot polling """
         print("Bot started")
 
-        self.datebase.date_to_date_analystics()
+        self.scheduler.add_job(self.datebase.monthly_document, 'cron', day=1, hour=0, minute=0, timezone=self.timezone)
+        self.scheduler.start()
+
         self.setup_command_menu()
         self.admin_handlers.start_admin_handlers()
         self.story_mode.handle_text()

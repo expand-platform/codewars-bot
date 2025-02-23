@@ -7,6 +7,8 @@ from src.codewars_api_get import Codewars_Challenges
 from src.database import Database
 from src.helpers.helpers import Helpers
 
+from src.messages.admin_messages import ADMIN_MESSAGES
+
 class Admin():
     def __init__(self, bot: TeleBot): 
         self.bot = bot
@@ -20,20 +22,63 @@ class Admin():
     def start_admin_handlers(self):
         self.admin_commands_start()
         self.show_bot_analytics()
+        self.user_add_property()
+        self.user_delete_property()
         self.load_tasks_command()
 
 
     def admin_commands_start(self):
         @self.bot.message_handler(commands=["admin"], access_level=["admin"]) 
         def admin(message: Message):
-            self.bot.send_message(message.chat.id, f"Only admin can see this message!\n\nHere is a list of admin commands:\n/load_tasks\n/show_analytics")
+            self.bot.send_message(message.chat.id, ADMIN_MESSAGES["admin_commands_list"])
             
     def show_bot_analytics(self):
         @self.bot.message_handler(commands=["show_analytics"], access_level=["admin"]) 
         def echo(message: Message):
             document = self.database.show_analytics()
-            
             self.bot.send_message(message.chat.id, document)
+
+    def user_add_property(self):
+        @self.bot.message_handler(commands=["user_add_property"], access_level=["admin"])
+        def echo(message: Message):
+
+            bot_message = self.bot.send_message(
+                chat_id=message.chat.id, 
+                text="Какую строку нужно добавить?", 
+                parse_mode=self.parse_mode
+            )
+
+            self.bot.register_next_step_handler(message=bot_message, callback=self.user_add_property_second_step)
+
+    def user_add_property_second_step(self, message: Message):
+        string = message.text
+        bot_message = self.bot.send_message(
+                chat_id=message.chat.id, 
+                text="Какое значение?", 
+                parse_mode=self.parse_mode
+            )
+        self.bot.register_next_step_handler(bot_message, self.user_add_property_final_step, string)
+
+    def user_add_property_final_step(self, message: Message, string):
+        value = message.text
+        Database().users_collection.update_many({}, {"$set": {string: value}})
+        self.bot.send_message(message.chat.id, f"Всем пользователям была добавлена строка {string} со значением {value}")
+        
+    def user_delete_property(self):
+        @self.bot.message_handler(commands=["user_delete_property"], access_level=["admin"])
+        def echo(message: Message):
+            bot_message = self.bot.send_message(
+                chat_id=message.chat.id, 
+                text="Какую строку нужно удалить?", 
+                parse_mode=self.parse_mode
+            )
+
+            self.bot.register_next_step_handler(message=bot_message, callback=self.user_delete_property_final_step)
+
+    def user_delete_property_final_step(self, message: Message):
+        string = message.text
+        Database().users_collection.update_many({}, {"$unset": {string: ""}})
+        self.bot.send_message(message.chat.id, f"У всех пользователей была удалена строка {string}")
 
     def load_tasks_command(self):
         @self.bot.message_handler(commands=["load_tasks"], access_level=["admin"], func=lambda message: True) 

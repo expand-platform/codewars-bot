@@ -4,9 +4,7 @@ from pymongo.collection import Collection
 from src.helpers.Dotenv import Dotenv
 from telebot.types import Message
 from bson import ObjectId
-from datetime import datetime, timezone
-from dateutil.relativedelta import relativedelta
-from threading import Timer
+from datetime import datetime
 
 class Database:
     def __init__(self):
@@ -20,49 +18,60 @@ class Database:
         
         self.users_collection: Collection = self.database['users']
 
-
         self.challenges_collection: Collection = self.database['challenges']
-        self.analytics: Collection = self.database['analytics']
-        
-    def date_to_date_analystics(self):
-        doc_id = "67ae1e0b83699d5a8115cfc0"
-        document = self.analytics.find_one({"_id": ObjectId(doc_id)})
-        current_date = datetime.now(timezone.utc)
-        month_before = current_date - relativedelta(month=1)
-        update = {"$set": {"starting_date": month_before}}
-        
-        self.analytics.update_one({"_id": ObjectId(doc_id)}, update)
-        Timer(10, self.date_to_date_analystics).start()
+        self.total_analytics: Collection = self.database['total analytics']
+        self.monthly_analytics: Collection = self.database['monthly analytics']
+    
+    def monthly_document(self): 
+        # ! DATE FORM IS YEAR-MONTH-DAY
+        full_date = datetime.now().strftime("%Y-%m-%d")
+        current_month = datetime.now().strftime("%B")
 
+        document = {
+            "full_date": full_date,
+            "month_word": current_month,
+            "/start": 0,
+            "/check_stats": 0, 
+            "/find_task": 0,
+            "/random_task": 0,
+            "/random_task_and_level": 0,
+            "/story_mode": 0,
+            "/language": 0, 
+            "/help": 0, 
+            "/reauthorize": 0,
+        }
 
-        
+        self.monthly_analytics.insert_one(document)
+        self.monthly_analytics_creation_date = full_date
 
-
-        # print("CURRENT: ", current_date, " MONTH BEFORE: ", month_before)
-        
-
-        
-
+        print("Monthly document has been created")
 
     def stat_update(self, command):
-        self.date_to_date_analystics()
+        # total analytics
+        doc_id = "67b1b2c4e2169e9b17c4cda1" 
+        document = self.total_analytics.find_one({"_id": ObjectId(doc_id)}) 
 
-        doc_id = "679f4042d631b228c70a5faf" 
-        document = self.analytics.find_one({"_id": ObjectId(doc_id)}) # getting analytics document from database
+        # monthly analytics
+        document_ma = self.monthly_analytics.find_one(sort=[("created_at", -1)])
+        form_ma = document_ma.get(command) + 1
+        update_ma = {"$set": {command: form_ma}} 
+        self.monthly_analytics.update_one(document_ma, update_ma, upsert=False) # monthly analytics update
 
 
-        form = document.get(command) + 1 # finding the used command in the document and adding 1 as user used it
-        update1 = {"$set": {command: form}} # variable to update data
-        self.analytics.update_one({}, update1, upsert=False) # updating the command in the file
+
+
+        form = document.get(command) + 1 
+        update1 = {"$set": {command: form}} 
+        self.total_analytics.update_one({}, update1, upsert=False) 
 
         count_users = self.users_collection.count_documents({}) # counts how many documents there are in an user collection in database
         update2 = {"$set": {"total_users": count_users}} # variable to update the number of users (just rewrites it, doesn't neccessary mean it's gonna add user or smth)
-        self.analytics.update_one({}, update2, upsert=False) # updating data in database
+        self.total_analytics.update_one({}, update2, upsert=False) # updating data in database
 
 
 
     def show_analytics(self):
-        document = self.analytics.find_one({})
+        document = self.total_analytics.find_one({})
         # Сообщение прижато к левому краю специально, так нужно
         message = f"""
 total_users: {document.get("total_users")}
