@@ -60,37 +60,35 @@ class Helpers():
         lowercase_result = result.lower()
         return lowercase_result
 
-    def tg_api_try_except(self, text: str):
-        MAX_LENGTH=4095
-        if len(text) <= MAX_LENGTH: 
-            return "OK"
-        elif len(text) > MAX_LENGTH:
-            return "TOO_LONG"
-
     def challenge_print(self, challenge_source, message, chat_id, sleep):
         messages = [
             self.lang("task_name", message).format(challenge_source["Challenge name"]),
-            self.lang("task_description", message).format(challenge_source['Description']),
             self.lang("task_rank", message).format(challenge_source['Rank']['name']),
+            self.lang("task_description", message).format(challenge_source['Description']),
             self.lang("task_url", message).format(challenge_source['Codewars link']),
         ]
 
         if sleep == True:
             time.sleep(4)
 
-        for i in messages:        
-            check = self.tg_api_try_except(i) 
-
-            if check == "OK":
+        for index, i in enumerate(messages, start=1):
+            if index == 1: 
+                bold_kata_name = f"*{challenge_source["Challenge name"]}*"
+                reply = f"{self.lang("task_name", message).format(bold_kata_name)}"
+                self.bot.send_message(chat_id, bold_kata_name, self.parse_mode) 
+            elif index == 2:
+                self.bot.send_message(chat_id, i, self.parse_mode) 
+            elif index == 3:
                 try:
-                    # конвертация html в markdown
                     converter = html2text.HTML2Text()
-                    converter.ignore_links = False
-                    task_in_markdown = converter.handle(i)
+                    converter.ignore_links = True
+                    task_in_markdown = converter.handle(challenge_source['Description'])
 
                     self.bot.send_message(chat_id, task_in_markdown, self.parse_mode) 
                 except:
-                    self.bot.send_message(chat_id, i)
-            elif check == "TOO_LONG":
-                text = self.lang("message_is_too_long", message)
-                self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+                    text = self.lang("message_is_too_long", message)
+                    self.bot.send_message(chat_id, text, parse_mode=self.parse_mode)
+            elif index == 4:
+                link = f"[Link]({challenge_source['Codewars link']})"
+                reply = self.lang("task_url", message).format(link)
+                self.bot.send_message(chat_id, reply, parse_mode=self.parse_mode)

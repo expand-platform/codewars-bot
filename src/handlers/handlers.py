@@ -293,10 +293,10 @@ class BotHandlers():
                 print("kata name:", challenge["Challenge name"])
                 self.helpers.challenge_print(challenge, message, chat_id, False)
                     
-                # также разделять описание на куски, если оно слишком длинное (для избежания 400 ошибки) 
             else:
                 bot_message = self.helpers.lang("random_task_not_found", message)
                 self.bot.send_message(chat_id, bot_message)
+            self.bot.delete_message(chat_id, sent_message.message_id)
 
     def find_task_command(self, message: Message):
         """Поиск задачи из кодварса по названию"""
