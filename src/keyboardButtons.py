@@ -13,6 +13,6 @@ normal_mode_buttons = {
 
 story_mode_buttons = {
     "receive_task": types.KeyboardButton("Receive Mission"),
-    "check_level": types.KeyboardButton("Check Level"),
+    "check_level": types.KeyboardButton("Check Rank"),
     "normal_mode": types.KeyboardButton("Change Mode 🔄"),
 }

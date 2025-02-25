@@ -43,6 +43,9 @@ MESSAGES_ENG = {
         "A quick Codewars kata a day keeps the bugs away! 🐛💻 Get started now!"
     ],
     "mode_selection": "Choose your mode:\n🔥 Normal Mode — No limits, full chaos, almost like a zombie apocalypse 🧟‍♀️!\n📖 Story Mode — An interactive adventure to test your wit and humor!\n\nWhich one will it be?",
-    "story_mode_selected": "You've selected story mode. Let's start the adventure! 🚀",
     "normal_mode_selected": "You've selected normal mode. Let's practice! 🚀",
+    
+    # * Story Mode messages
+    "story_mode_intro": "Your journey begins now! ⚔️\n Step into the world of challenges, where each task shapes your path to mastery. Will you rise to the challenge, or turn back? The choice is yours.",
+    "check_rank": "Your current rank: {} 🏆"    
 }

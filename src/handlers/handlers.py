@@ -133,7 +133,7 @@ class BotHandlers():
         self.bot.register_next_step_handler(message=bot_message, callback=self.authorization_ans)
         
     def authorization_ans(self, message: Message):
-        markup = self.create_keyboard()
+        markup = normal_mode_keyboard()
         username = message.from_user.username
         
         filter = {"tg_username": username}
@@ -162,10 +162,12 @@ class BotHandlers():
                 self.record_first_info(message.text, username, filter)
         
     def record_first_info(self, cw_username, username, filter):
+        # rank and totalDone_snum must be updated
         user = self.codewars_api.getuser_function(cw_username) 
-        update = {"$set": {"totalDone_snum": user["codeChallenges"]["totalCompleted"]}}
+        update = {"$set": {"totalDone_snum": user["codeChallenges"]["totalCompleted"], "rank": user["ranks"]["overall"]["name"]}}
         
         self.database.users_collection.update_one(filter, update, upsert=False)
+        
         
         
     def check_stats_command(self, message: Message): 
@@ -205,7 +207,7 @@ class BotHandlers():
             if mode == "STORY":
                 markup_buttons = story_mode_keyboard()
                 update = {"$set": {"story_mode": True}}
-                bot_message = self.helpers.lang("story_mode_selected", message)
+                bot_message = self.helpers.lang("story_mode_intro", message)
                 
             else:
                 update = {"$set": {"story_mode": False}}

@@ -112,7 +112,8 @@ reauthorize: {document.get("/reauthorize")}
                         "desired_language": "ENG", 
                         "access_level": "user", 
                         "totalDone_snum": None, 
-                        "story_mode": False}
+                        "story_mode": False,
+                        "rank": None,}
             self.users_collection.insert_one(document)
             print(f"Создан пользователь с юзернеймом {username}.")
 
